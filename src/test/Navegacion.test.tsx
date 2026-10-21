@@ -11,7 +11,7 @@ const rutas: [string, string][] = [
     ["/producto/7", "Guitarra Eléctrica Les Paul"],
     ["/carrito", "Carrito de compras"],
     ["/novedades", "Novedades"],
-    ["/novedad/3", "Detalle de la novedad"],
+    ["/novedad/3", "Taller de luthería: mantenimiento de instrumentos de cuerda"],
     ["/contacto", "Contacto"],
     ["/login", "Iniciar sesión"],
     ["/registro", "Registro de usuario"],
