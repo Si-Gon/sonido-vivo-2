@@ -42,10 +42,11 @@ function FiltrosCatalogo({ categoria, busqueda, alCambiarCategoria, alCambiarBus
                 />
             </div>
 
-            <div className="col-12 col-md-2 d-grid">
+            <div className="col-12 col-md-2 d-grid mb-3">
                 <Boton
                 texto="Limpiar"
                 variante="contorno"
+                tamano="normal"
                 alHacerClick={alLimpiar}
                 />
             </div>

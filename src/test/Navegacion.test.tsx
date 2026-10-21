@@ -5,7 +5,7 @@ import { MemoryRouter } from "react-router-dom";
 import App from "../App";
 
 const rutas: [string, string][] = [
-    ["/", "Inicio"],
+    ["/", "Bienvenidos a Sonido Vivo"],
     ["/nosotros", "Nosotros"],
     ["/catalogo", "Catálogo de productos"],
     ["/producto/7", "Guitarra Eléctrica Les Paul"],

@@ -320,3 +320,147 @@ main {
     font-weight: 600;
     margin-bottom: .3rem;
 }
+
+.sv-seccion h2 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1.5rem;
+    color: var(--ink);
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+.sv-lead {
+    font-size: 1.1rem;
+    color: var(--ink-muted);
+}
+
+.sv-panel {
+    background: var(--paper-card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    padding: 1.2rem;
+}
+
+.sv-panel h2,
+.sv-panel h3 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1.15rem;
+    color: var(--ink);
+    text-align: left;
+    margin-bottom: .6rem;
+}
+
+.sv-integrante {
+    margin-bottom: .2rem;
+}
+
+.sv-rol {
+    color: var(--ink-muted);
+    margin: 0;
+}
+
+.sv-icono {
+    color: var(--brass-deep);
+    flex-shrink: 0;
+    margin-top: .15rem;
+}
+
+.sv-esencia {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sv-esencia li {
+    display: flex;
+    align-items: flex-start;
+    gap: .6rem;
+    color: var(--ink-muted);
+    margin-bottom: .8rem;
+}
+
+.sv-esencia li:last-child {
+    margin-bottom: 0;
+}
+
+.sv-carrusel {
+    position: relative;
+}
+
+.sv-carrusel-slide {
+    position: relative;
+    display: none;
+    min-height: 250px;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+}
+
+.sv-carrusel-activa {
+    display: block;
+}
+
+.sv-carrusel-imagen {
+    display: block;
+    width: 100%;
+    height: 250px;
+    object-fit: cover;
+}
+
+.sv-carrusel-contenido {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(180deg, rgba(30, 23, 18, .15) 0%, rgba(30, 23, 18, .8) 100%);
+    color: var(--paper-text);
+    text-align: center;
+    padding: 1rem;
+}
+
+.sv-carrusel-contenido h2 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1.9rem;
+    color: var(--brass-light);
+    text-align: center;
+    margin-bottom: .5rem;
+}
+
+.sv-carrusel-contenido p {
+    max-width: 500px;
+    margin: 0;
+}
+
+.sv-carrusel-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 2;
+    background: rgba(30, 23, 18, .55);
+    color: var(--paper-text);
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: .5rem .8rem;
+    font-size: 1.4rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: background-color .15s ease, color .15s ease;
+}
+
+.sv-carrusel-btn:hover {
+    background: var(--brass);
+    color: var(--walnut-950);
+}
+
+.sv-carrusel-izq {
+    left: .8rem;
+}
+
+.sv-carrusel-der {
+    right: .8rem;
+}

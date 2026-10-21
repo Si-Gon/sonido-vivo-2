@@ -5,18 +5,19 @@ type Props = {
     to?: string;
     tipo?: "button" | "submit";
     variante?: "oscuro" | "contorno";
+    tamano?: "pequeno" | "normal";
     ancho?: boolean;
     deshabilitado?: boolean;
     etiquetaAccesible?: string;
     alHacerClick?: () => void;
 };
 
-function Boton({ texto, to, tipo = "button", variante = "oscuro", ancho = false, deshabilitado = false, etiquetaAccesible, alHacerClick }: Props) {
+function Boton({ texto, to, tipo = "button", variante = "oscuro", tamano = "pequeno", ancho = false, deshabilitado = false, etiquetaAccesible, alHacerClick }: Props) {
 
     const clases = [
         "btn",
         variante === "oscuro" ? "btn-dark" : "btn-outline-dark",
-        "btn-sm",
+        tamano === "pequeno" ? "btn-sm" : "",
         ancho ? "w-100" : ""
     ].filter(Boolean).join(" ");
 
