@@ -8,13 +8,21 @@ import LayoutPublico from "../Componentes/organismos/LayoutPublico";
 test("Prueba 4: las vistas declaran las clases responsivas de Bootstrap", () => {
     const { unmount } = render(<MemoryRouter><Catalogo /></MemoryRouter>);
 
-    expect(document.querySelectorAll(".col-12").length).toBe(51);
-    expect(document.querySelectorAll(".col-md-6").length).toBe(51);
-    expect(document.querySelectorAll(".col-lg-4").length).toBe(51);
+    const tarjetas = Array.from(document.querySelectorAll(".sv-card"));
+    expect(tarjetas.length).toBe(51);
 
-    const fila = document.querySelector(".row.g-3");
-    expect(fila).not.toBeNull();
+    const columnas = tarjetas.map((tarjeta) => tarjeta.parentElement?.className ?? "");
+    expect(columnas.filter((columna) => columna.includes("col-12")).length).toBe(51);
+    expect(columnas.filter((columna) => columna.includes("col-md-6")).length).toBe(51);
+    expect(columnas.filter((columna) => columna.includes("col-lg-4")).length).toBe(51);
+
+    const fila = tarjetas[0].parentElement?.parentElement;
+    expect(fila?.className).toContain("row");
+    expect(fila?.className).toContain("g-3");
     expect(fila?.children.length).toBe(51);
+
+    const filtroCategoria = document.querySelector(".sv-filtros [name=categoria]");
+    expect(filtroCategoria?.parentElement?.parentElement?.className).toContain("col-md-5");
     unmount();
 
     render(<MemoryRouter><LayoutPublico /></MemoryRouter>);

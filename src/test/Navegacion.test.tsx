@@ -8,7 +8,7 @@ const rutas: [string, string][] = [
     ["/", "Inicio"],
     ["/nosotros", "Nosotros"],
     ["/catalogo", "Catálogo de productos"],
-    ["/producto/7", "Detalle del producto"],
+    ["/producto/7", "Guitarra Eléctrica Les Paul"],
     ["/carrito", "Carrito de compras"],
     ["/novedades", "Novedades"],
     ["/novedad/3", "Detalle de la novedad"],
@@ -21,7 +21,7 @@ const rutas: [string, string][] = [
     ["/ruta-inexistente", "Página no encontrada"]
 ];
 
-test("Prueba 15: cada ruta muestra su pagina y el detalle recibe el parametro", () => {
+test("Prueba 15: cada ruta muestra su pagina y el detalle lee el parametro de la URL", () => {
     rutas.forEach(([ruta, titulo]) => {
         const { unmount } = render(
             <MemoryRouter initialEntries={[ruta]}>
@@ -37,6 +37,15 @@ test("Prueba 15: cada ruta muestra su pagina y el detalle recibe el parametro", 
             <App />
         </MemoryRouter>
     );
-    expect(screen.getByText("Producto: 7").textContent).toBe("Producto: 7");
+    expect(screen.getByText("Epiphone · Les Paul Std").textContent).toBe("Epiphone · Les Paul Std");
+    expect(screen.getByText("$329.990").textContent).toBe("$329.990");
+    expect(screen.getByText("Código: GE002").textContent).toBe("Código: GE002");
     unmount();
+
+    render(
+        <MemoryRouter initialEntries={["/producto/999"]}>
+            <App />
+        </MemoryRouter>
+    );
+    expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Producto no encontrado");
 });

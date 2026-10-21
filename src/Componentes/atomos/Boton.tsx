@@ -6,9 +6,10 @@ type Props = {
     tipo?: "button" | "submit";
     variante?: "oscuro" | "contorno";
     ancho?: boolean;
+    alHacerClick?: () => void;
 };
 
-function Boton({ texto, to, tipo = "button", variante = "oscuro", ancho = false }: Props) {
+function Boton({ texto, to, tipo = "button", variante = "oscuro", ancho = false, alHacerClick }: Props) {
 
     const clases = [
         "btn",
@@ -26,7 +27,7 @@ function Boton({ texto, to, tipo = "button", variante = "oscuro", ancho = false 
     }
 
     return(
-        <button className={clases} type={tipo}>
+        <button className={clases} type={tipo} onClick={alHacerClick}>
             {texto}
         </button>
     )
