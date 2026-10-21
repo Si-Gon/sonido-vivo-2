@@ -66,7 +66,3 @@ export const productos: Producto[] = [
 ];
 
 export const categorias: string[] = [...new Set(productos.map((producto) => producto.categoria))];
-
-export function buscarProducto(id: number) {
-    return productos.find((producto) => producto.id === id);
-}

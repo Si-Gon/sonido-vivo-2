@@ -1,10 +1,14 @@
+import { useState } from "react";
 import { useParams } from "react-router-dom";
+import Aviso from "../Componentes/atomos/Aviso";
 import Boton from "../Componentes/atomos/Boton";
-import { buscarProducto } from "../datos/productos";
+import { agregarAlCarrito, mensajeDeAgregado } from "../datos/carrito";
+import { buscarProducto } from "../datos/repositorioProductos";
 import { formatearPrecio } from "../utilidades/formato";
 
 function DetalleProducto() {
     const { id } = useParams();
+    const [aviso, setAviso] = useState("");
 
     const producto = buscarProducto(Number(id));
 
@@ -24,7 +28,12 @@ function DetalleProducto() {
         )
     }
 
+    const agregarProducto = () => {
+        setAviso(mensajeDeAgregado(agregarAlCarrito(producto.id)));
+    };
+
     return(
+        <>
         <section className="sv-seccion sv-seccion-ancha">
             <div className="row g-4 align-items-center">
                 <div className="col-12 col-md-5">
@@ -54,14 +63,29 @@ function DetalleProducto() {
                         <li>Stock: {producto.stock} unidades</li>
                     </ul>
 
-                    <Boton
-                    texto="Volver al catálogo"
-                    to="/catalogo"
-                    variante="contorno"
-                    />
+                    <div className="d-flex flex-wrap gap-2">
+                        <Boton
+                        texto="Agregar al carrito"
+                        alHacerClick={agregarProducto}
+                        />
+
+                        <Boton
+                        texto="Volver al catálogo"
+                        to="/catalogo"
+                        variante="contorno"
+                        />
+                    </div>
                 </div>
             </div>
         </section>
+
+            {aviso !== "" && (
+                <Aviso
+                mensaje={aviso}
+                alCerrar={() => setAviso("")}
+                />
+            )}
+        </>
     )
 }
 

@@ -19,7 +19,7 @@ const producto: Producto = {
 };
 
 test("Prueba 2: la tarjeta muestra los datos del producto recibido por propiedad", () => {
-    render(<MemoryRouter><CardProducto producto={producto} /></MemoryRouter>);
+    render(<MemoryRouter><CardProducto producto={producto} alAgregar={() => {}} /></MemoryRouter>);
 
     expect(screen.getByText("Guitarra Eléctrica Les Paul").textContent).toBe("Guitarra Eléctrica Les Paul");
     expect(screen.getByText("Epiphone · Les Paul Std").textContent).toBe("Epiphone · Les Paul Std");

@@ -6,10 +6,12 @@ type Props = {
     tipo?: "button" | "submit";
     variante?: "oscuro" | "contorno";
     ancho?: boolean;
+    deshabilitado?: boolean;
+    etiquetaAccesible?: string;
     alHacerClick?: () => void;
 };
 
-function Boton({ texto, to, tipo = "button", variante = "oscuro", ancho = false, alHacerClick }: Props) {
+function Boton({ texto, to, tipo = "button", variante = "oscuro", ancho = false, deshabilitado = false, etiquetaAccesible, alHacerClick }: Props) {
 
     const clases = [
         "btn",
@@ -20,14 +22,14 @@ function Boton({ texto, to, tipo = "button", variante = "oscuro", ancho = false,
 
     if (to) {
         return(
-            <Link className={clases} to={to}>
+            <Link className={clases} to={to} aria-label={etiquetaAccesible}>
                 {texto}
             </Link>
         )
     }
 
     return(
-        <button className={clases} type={tipo} onClick={alHacerClick}>
+        <button className={clases} type={tipo} disabled={deshabilitado} aria-label={etiquetaAccesible} onClick={alHacerClick}>
             {texto}
         </button>
     )

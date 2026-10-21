@@ -204,3 +204,119 @@ main {
     color: var(--ink-muted);
     padding-left: 1.1rem;
 }
+
+.sv-item-carrito {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    background: var(--paper-card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    padding: .7rem;
+    margin-bottom: .6rem;
+}
+
+.sv-item-imagen {
+    width: 90px;
+    height: 90px;
+    object-fit: cover;
+    border-radius: var(--radius-sm);
+}
+
+.sv-item-datos {
+    flex: 1;
+}
+
+.sv-item-titulo {
+    font-family: var(--font-display);
+    font-size: 1rem;
+    color: var(--ink);
+    margin-bottom: .1rem;
+}
+
+.sv-total {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--ink);
+    margin-top: 1rem;
+}
+
+.sv-item-cantidad {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+}
+
+.sv-cantidad {
+    min-width: 2rem;
+    text-align: center;
+    font-weight: 700;
+    color: var(--ink);
+}
+
+.sv-item-subtotal {
+    min-width: 6rem;
+    margin: 0;
+    text-align: right;
+    font-weight: 700;
+    color: var(--ink);
+}
+
+.sv-aviso {
+    position: fixed;
+    left: 50%;
+    bottom: 1.5rem;
+    z-index: 1080;
+    display: flex;
+    align-items: center;
+    gap: .8rem;
+    max-width: min(92vw, 420px);
+    background-color: var(--walnut-950);
+    color: var(--paper-text);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+    padding: .75rem 1rem;
+    animation: sv-aviso-ciclo 3.6s ease forwards;
+}
+
+@keyframes sv-aviso-ciclo {
+    0% { opacity: 0; transform: translate(-50%, 8px); }
+    8% { opacity: 1; transform: translate(-50%, 0); }
+    88% { opacity: 1; transform: translate(-50%, 0); }
+    100% { opacity: 0; transform: translate(-50%, 8px); }
+}
+
+.sv-aviso-cerrar {
+    background: none;
+    border: none;
+    padding: 0 .2rem;
+    color: var(--paper-text-muted);
+    font-size: 1.1rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.sv-aviso-cerrar:hover {
+    color: var(--paper-text);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .sv-aviso {
+        animation: none;
+        transform: translateX(-50%);
+    }
+}
+
+.sv-item-stock {
+    color: var(--ink-muted);
+    font-size: .85rem;
+    margin: 0;
+}
+
+.sv-card-stock {
+    color: #A6323F;
+    font-size: .85rem;
+    font-weight: 600;
+    margin-bottom: .3rem;
+}

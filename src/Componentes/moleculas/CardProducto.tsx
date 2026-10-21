@@ -4,9 +4,12 @@ import type { Producto } from "../../datos/productos";
 
 type Props = {
     producto: Producto;
+    alAgregar: (id: number) => void;
 };
 
-function CardProducto({ producto }: Props) {
+function CardProducto({ producto, alAgregar }: Props) {
+
+    const sinStock = producto.stock === 0;
 
     return(
         <article className="card sv-card h-100">
@@ -29,11 +32,21 @@ function CardProducto({ producto }: Props) {
                     {formatearPrecio(producto.precio)}
                 </p>
 
-                <div className="d-grid mt-auto">
+                {sinStock && (
+                    <p className="sv-card-stock">Sin stock</p>
+                )}
+
+                <div className="d-grid gap-1 mt-auto">
                     <Boton
                     texto="Ver detalle"
                     to={`/producto/${producto.id}`}
                     variante="contorno"
+                    />
+
+                    <Boton
+                    texto="Agregar"
+                    deshabilitado={sinStock}
+                    alHacerClick={() => alAgregar(producto.id)}
                     />
                 </div>
             </div>
