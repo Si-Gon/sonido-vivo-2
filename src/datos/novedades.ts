@@ -40,7 +40,7 @@ export const novedades: Novedad[] = [
         titulo: "Taller de luthería: mantenimiento de instrumentos de cuerda",
         fecha: "2026-09-26",
         categoria: "Talleres",
-        imagen: "/img/carrusel/taller001.jpg",
+        imagen: "/img/carrusel/lutheria001.webp",
         resumen: "Cuatro sábados para aprender a cambiar cuerdas, ajustar la acción y calibrar la afinación de tu guitarra o bajo.",
         parrafos: [
             "El taller de luthería nace de una pregunta que nos hacen todas las semanas: por qué mi guitarra dejó de sonar como antes. Durante cuatro sesiones de dos horas vamos a trabajar sobre instrumentos reales: cambio de cuerdas y limpieza del diapasón, ajuste del alma y de la acción, calibración de la octavación y afinación final.",

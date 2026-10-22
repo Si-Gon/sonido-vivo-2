@@ -37,11 +37,14 @@ function DetalleProducto() {
         <section className="sv-seccion sv-seccion-ancha">
             <div className="row g-4 align-items-center">
                 <div className="col-12 col-md-5">
-                    <img
-                    className="sv-detalle-imagen"
-                    src={`/img/productos/${producto.imagen}`}
-                    alt={producto.nombre}
-                    />
+                    <figure className="sv-placa-foto">
+                        <img
+                        className="sv-detalle-imagen"
+                        src={`/img/productos/${producto.imagen}`}
+                        alt={producto.nombre}
+                        />
+                        <figcaption>Imagen referencial del producto</figcaption>
+                    </figure>
                 </div>
 
                 <div className="col-12 col-md-7">

@@ -11,7 +11,7 @@ function Navbar() {
             <div className="container">
 
                 <Link className="navbar-brand sv-marca" to="/">
-                    <img src="/img/logo.png" alt="" className="sv-logo" />
+                    <img src="/img/logo-claro.png" alt="" className="sv-logo" />
                     Sonido Vivo
                 </Link>
 

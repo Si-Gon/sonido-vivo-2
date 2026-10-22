@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Aviso from "../Componentes/atomos/Aviso";
+import Boton from "../Componentes/atomos/Boton";
 import CardProducto from "../Componentes/moleculas/CardProducto";
 import Carrusel from "../Componentes/organismos/Carrusel";
 import { agregarAlCarrito, mensajeDeAgregado } from "../datos/carrito";
@@ -7,7 +8,7 @@ import { diapositivas } from "../datos/historia";
 import { listarProductos } from "../datos/repositorioProductos";
 import type { Producto } from "../datos/productos";
 
-const CANTIDAD_DESTACADOS = 7;
+const CANTIDAD_DESTACADOS = 6;
 
 function elegirDestacados(): Producto[] {
     const conStock = listarProductos().filter((producto) => producto.stock > 0);
@@ -30,15 +31,52 @@ function Inicio() {
 
     return(
         <>
-            <section className="sv-seccion sv-seccion-ancha">
-                <h1>Bienvenidos a Sonido Vivo</h1>
-                <p className="sv-lead">
-                    Somos una tienda de instrumentos musicales con 11 años equipando a músicos de todo Chile. Guitarras, bajos, baterías, teclados, amplificadores, micrófonos, pedales de efectos y accesorios: todo lo que necesitas para crear tu música.
-                </p>
-            </section>
+            <section className="sv-hero">
+                <img
+                className="sv-hero-imagen"
+                src="/img/fondos/escenario.jpg"
+                alt="Dos músicos tocando guitarras acústicas sobre un escenario con poca luz"
+                />
 
-            <section className="sv-seccion sv-seccion-ancha" aria-label="Nuestra historia">
-                <Carrusel diapositivas={diapositivas} />
+                <div className="sv-hero-contenido">
+                    <p className="sv-hero-cinta">Instrumentos musicales · Viña del Mar</p>
+
+                    <h1>Bienvenidos a Sonido Vivo</h1>
+
+                    <p className="sv-hero-lede">
+                        Equipar a un músico no es vender un instrumento: es ayudarlo a encontrar su sonido. Once años en el mostrador, con guitarras, bajos, baterías, teclados, amplificadores y accesorios, stock real en línea y despacho a todo Chile.
+                    </p>
+
+                    <div className="sv-hero-acciones">
+                        <Boton
+                        texto="Ver catálogo"
+                        to="/catalogo"
+                        tamano="normal"
+                        />
+
+                        <Boton
+                        texto="Cómo llegar"
+                        to="/contacto"
+                        variante="contorno"
+                        tamano="normal"
+                        />
+                    </div>
+
+                    <dl className="sv-hero-cifras">
+                        <div>
+                            <dt>11 años</dt>
+                            <dd>acompañando músicos</dd>
+                        </div>
+                        <div>
+                            <dt>51</dt>
+                            <dd>productos en línea</dd>
+                        </div>
+                        <div>
+                            <dt>Todo Chile</dt>
+                            <dd>despacho y retiro en tienda</dd>
+                        </div>
+                    </dl>
+                </div>
             </section>
 
             <section className="sv-seccion sv-seccion-ancha">
@@ -54,6 +92,11 @@ function Inicio() {
                         </div>
                     ))}
                 </div>
+            </section>
+
+            <section className="sv-seccion sv-seccion-ancha" aria-label="Nuestra historia">
+                <h2>Once años de historia</h2>
+                <Carrusel diapositivas={diapositivas} />
             </section>
 
             {aviso !== "" && (

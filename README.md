@@ -1,75 +1,43 @@
-# React + TypeScript + Vite
+# Sonido Vivo · sitio en React + Vite + TypeScript
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Sitio de la tienda de instrumentos musicales Sonido Vivo (Viña del Mar, Región de Valparaíso),
+construido con React, Vite, TypeScript, React Router y Bootstrap, organizado con Atomic Design.
 
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Cómo ejecutarlo
 
 ```
+npm install
+npm run dev
+```
 
-You can also install [eslint-plugin-react-x](https://npmx.dev/package/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://npmx.dev/package/eslint-plugin-react-dom) for React-specific lint rules:
+## Comandos
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+| Comando | Qué hace |
+|---|---|
+| `npm run dev` | Levanta el sitio en modo desarrollo |
+| `npm run build` | Genera la versión de producción en `dist/` |
+| `npm run preview` | Sirve la versión de producción |
+| `npm run test` | Ejecuta las pruebas con Vitest y React Testing Library |
+| `npm run test:coverage` | Ejecuta las pruebas y genera el reporte de cobertura |
+| `npm run lint` | Revisa el código con ESLint |
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Estructura
 
 ```
+src/
+├── Componentes/
+│   ├── atomos/         Boton, Input, Select, Aviso, Icono
+│   ├── moleculas/      CardProducto, CardNovedad, CampoFormulario, CampoSeleccion, ItemCarrito
+│   └── organismos/     Navbar, NavbarAdmin, PiePagina, Carrusel, FiltrosCatalogo, layouts
+├── Paginas/            una página por ruta
+├── datos/              módulos de datos: productos, novedades, historia, carrito, repositorio
+├── utilidades/         formateo de precios y fechas
+└── test/               pruebas con Vitest + React Testing Library
+```
+
+## Datos
+
+El catálogo se sirve desde `src/datos/repositorioProductos.ts`, que actúa como fuente de datos
+simulada y mantiene los productos en `localStorage` (clave `productos`), de modo que el alta,
+la edición, la eliminación y el descuento de stock por venta quedan disponibles para el panel
+de administración sin base de datos.
