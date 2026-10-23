@@ -52,7 +52,7 @@ function Catalogo() {
                 ) : (
                     <div className="row g-3">
                         {productosFiltrados.map((producto) => (
-                            <div className="col-12 col-md-6 col-lg-4" key={producto.id}>
+                            <div className="col-12 col-md-6 col-lg-4 col-xl-3" key={producto.id}>
                                 <CardProducto
                                 producto={producto}
                                 alAgregar={agregarProducto}

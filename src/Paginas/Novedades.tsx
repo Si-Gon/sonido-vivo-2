@@ -51,7 +51,7 @@ function Novedades() {
 
             <div className="row g-3">
                 {anteriores.map((novedad) => (
-                    <div className="col-12 col-md-6 col-lg-4" key={novedad.id}>
+                    <div className="col-12 col-md-6 col-lg-4 col-xl-3" key={novedad.id}>
                         <CardNovedad
                         novedad={novedad}
                         />

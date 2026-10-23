@@ -3,23 +3,46 @@ main {
     flex: 1;
 }
 
+.container {
+    max-width: min(1800px, 92%);
+}
+
+.sv-banda {
+    position: relative;
+    padding: 3rem 0;
+}
+
+.sv-banda::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 100vw;
+    transform: translateX(-50%);
+    background: var(--panel);
+    border-top: 1px solid var(--linea);
+    border-bottom: 1px solid var(--linea);
+    z-index: -1;
+}
+
 .sv-hero {
     position: relative;
-    width: 100vw;
-    margin-left: calc(50% - 50vw);
-    margin-bottom: 2.5rem;
-    min-height: 560px;
     display: flex;
     align-items: flex-end;
-    overflow: hidden;
+    min-height: 560px;
+    margin-bottom: 2.5rem;
     border-bottom: 1px solid var(--linea);
 }
 
 .sv-hero-imagen {
     position: absolute;
-    inset: 0;
-    width: 100%;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 100vw;
     height: 100%;
+    transform: translateX(-50%);
     object-fit: cover;
     object-position: 50% 35%;
 }
@@ -27,7 +50,11 @@ main {
 .sv-hero::after {
     content: '';
     position: absolute;
-    inset: 0;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 100vw;
+    transform: translateX(-50%);
     background:
         linear-gradient(to top, rgba(12, 10, 9, .94) 0%, rgba(12, 10, 9, .72) 26%, rgba(12, 10, 9, .26) 62%, rgba(12, 10, 9, .6) 100%),
         linear-gradient(100deg, rgba(12, 10, 9, .88) 0%, rgba(12, 10, 9, .74) 42%, rgba(12, 10, 9, .3) 74%, rgba(12, 10, 9, .58) 100%);
@@ -37,9 +64,7 @@ main {
     position: relative;
     z-index: 2;
     width: 100%;
-    max-width: 1320px;
-    margin: 0 auto;
-    padding: 6rem 12px 2.6rem;
+    padding: 5.5rem 0 2.6rem;
 }
 
 .sv-hero-cinta {
@@ -806,29 +831,9 @@ label {
     font-size: .78rem;
 }
 
-@media (max-width: 1399px) {
-    .sv-hero-contenido {
-        max-width: 1140px;
-    }
-}
-
-@media (max-width: 1199px) {
-    .sv-hero-contenido {
-        max-width: 960px;
-    }
-}
-
 @media (max-width: 991px) {
-    .sv-hero-contenido {
-        max-width: 720px;
-    }
-
     .sv-hero {
         min-height: 480px;
-    }
-
-    .sv-hero-contenido {
-        padding-top: 4.5rem;
     }
 
     .sv-hero-cifras div {
@@ -837,17 +842,7 @@ label {
     }
 }
 
-@media (max-width: 767px) {
-    .sv-hero-contenido {
-        max-width: 540px;
-    }
-}
-
 @media (max-width: 575px) {
-    .sv-hero-contenido {
-        max-width: none;
-    }
-
     .sv-hero {
         min-height: 430px;
     }

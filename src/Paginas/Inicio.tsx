@@ -8,7 +8,7 @@ import { diapositivas } from "../datos/historia";
 import { listarProductos } from "../datos/repositorioProductos";
 import type { Producto } from "../datos/productos";
 
-const CANTIDAD_DESTACADOS = 6;
+const CANTIDAD_DESTACADOS = 8;
 
 function elegirDestacados(): Producto[] {
     const conStock = listarProductos().filter((producto) => producto.stock > 0);
@@ -79,12 +79,12 @@ function Inicio() {
                 </div>
             </section>
 
-            <section className="sv-seccion sv-seccion-ancha">
+            <section className="sv-seccion sv-seccion-ancha sv-banda">
                 <h2>Productos destacados</h2>
 
                 <div className="row g-3">
                     {destacados.map((producto) => (
-                        <div className="col-12 col-md-6 col-lg-4" key={producto.id}>
+                        <div className="col-12 col-md-6 col-lg-4 col-xl-3" key={producto.id}>
                             <CardProducto
                             producto={producto}
                             alAgregar={agregarProducto}
