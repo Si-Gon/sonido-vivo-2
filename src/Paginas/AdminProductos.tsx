@@ -3,112 +3,81 @@ import CampoFormulario from "../Componentes/moleculas/CampoFormulario";
 import CampoSeleccion from "../Componentes/moleculas/CampoSeleccion";
 import Boton from "../Componentes/atomos/Boton";
 import Aviso from "../Componentes/atomos/Aviso";
-import { formatearPrecio } from "../utilidades/formato";
 
 interface Producto {
     id: number;
     nombre: string;
     categoria: string;
     precio: number;
+    stock: number;
     imagen: string;
 }
 
-const productosIniciales: Producto[] = [
-    {
-        id: 1,
-        nombre: "Guitarra Eléctrica Fender Stratocaster",
-        categoria: "Guitarras",
-        precio: 750000,
-        imagen: "https://via.placeholder.com/150"
-    },
-    {
-        id: 2,
-        nombre: "Batería Acústica Yamaha Stage Custom",
-        categoria: "Percusión",
-        precio: 1200000,
-        imagen: "https://via.placeholder.com/150"
-    }
-];
+const productosIniciales: Producto[] = [];
 
 function AdminProductos() {
     const [productos, setProductos] = useState<Producto[]>(productosIniciales);
-    const [idEditando, setIdEditando] = useState<number | null>(null);
     const [nombre, setNombre] = useState("");
-    const [categoria, setCategoria] = useState("");
+    const [categoria, setCategoria] = useState("Guitarras");
     const [precio, setPrecio] = useState("");
+    const [stock, setStock] = useState("");
     const [imagen, setImagen] = useState("");
     const [error, setError] = useState("");
     const [aviso, setAviso] = useState("");
 
-    const limpiarFormulario = () => {
-        setIdEditando(null);
-        setNombre("");
-        setCategoria("");
-        setPrecio("");
-        setImagen("");
-        setError("");
-    };
-
-    const handleEditar = (prod: Producto) => {
-        setIdEditando(prod.id);
-        setNombre(prod.nombre);
-        setCategoria(prod.categoria);
-        setPrecio(prod.precio.toString());
-        setImagen(prod.imagen);
-    };
-
-    const handleEliminar = (id: number) => {
-        setProductos(productos.filter((p) => p.id !== id));
-        setAviso("Producto eliminado correctamente.");
-    };
-
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleCrearProducto = (e: React.FormEvent) => {
         e.preventDefault();
         setError("");
 
-        if (!nombre.trim() || !categoria || !precio || !imagen.trim()) {
-            setError("Todos los campos son obligatorios.");
+        if (!nombre.trim() || !categoria.trim() || !precio || !stock) {
+            setError("Todos los campos marcados son obligatorios.");
             return;
         }
 
         const precioNum = Number(precio);
+        const stockNum = Number(stock);
+
         if (isNaN(precioNum) || precioNum <= 0) {
-            setError("Ingrese un precio válido mayor a 0.");
+            setError("El precio debe ser un número positivo.");
             return;
         }
 
-        if (idEditando !== null) {
-            setProductos(
-                productos.map((p) =>
-                    p.id === idEditando
-                        ? { ...p, nombre, categoria, precio: precioNum, imagen }
-                        : p
-                )
-            );
-            setAviso("Producto actualizado con éxito.");
-        } else {
-            const nuevoProducto: Producto = {
-                id: Date.now(),
-                nombre,
-                categoria,
-                precio: precioNum,
-                imagen
-            };
-            setProductos([...productos, nuevoProducto]);
-            setAviso("Producto agregado con éxito.");
+        if (isNaN(stockNum) || stockNum < 0) {
+            setError("El stock no puede ser negativo.");
+            return;
         }
 
-        limpiarFormulario();
+        const nuevoProducto: Producto = {
+            id: Date.now(),
+            nombre,
+            categoria,
+            precio: precioNum,
+            stock: stockNum,
+            imagen: imagen.trim() || "https://via.placeholder.com/150"
+        };
+
+        setProductos([...productos, nuevoProducto]);
+        setAviso("Producto agregado exitosamente.");
+        setNombre("");
+        setCategoria("Guitarras");
+        setPrecio("");
+        setStock("");
+        setImagen("");
+    };
+
+    const eliminarProducto = (id: number) => {
+        setProductos(productos.filter((p) => p.id !== id));
+        setAviso("Producto eliminado del inventario.");
     };
 
     return (
         <section className="sv-seccion sv-seccion-ancha">
-            <h1>Administración de Productos</h1>
+            <h1>Gestión de Productos</h1>
 
             <div className="row g-4">
                 <div className="col-12 col-lg-5">
-                    <form className="sv-panel" onSubmit={handleSubmit}>
-                        <h3>{idEditando !== null ? "Editar Producto" : "Nuevo Producto"}</h3>
+                    <form className="sv-panel" onSubmit={handleCrearProducto}>
+                        <h3>Agregar Producto</h3>
 
                         {error && <p className="text-danger mb-3">{error}</p>}
 
@@ -117,7 +86,7 @@ function AdminProductos() {
                             tipo="text"
                             nombre="nombre"
                             valor={nombre}
-                            marcador="Ej: Teclado Roland GW-8"
+                            marcador="Ej: Guitarra Electroacústica"
                             alCambiar={setNombre}
                         />
 
@@ -126,12 +95,11 @@ function AdminProductos() {
                             nombre="categoria"
                             valor={categoria}
                             opciones={[
-                                { valor: "", etiqueta: "Seleccione una categoría" },
                                 { valor: "Guitarras", etiqueta: "Guitarras" },
                                 { valor: "Bajos", etiqueta: "Bajos" },
                                 { valor: "Teclados", etiqueta: "Teclados" },
-                                { valor: "Percusión", etiqueta: "Percusión" },
-                                { valor: "Audio", etiqueta: "Audio y Amplificadores" }
+                                { valor: "Baterías", etiqueta: "Baterías" },
+                                { valor: "Accesorios", etiqueta: "Accesorios" }
                             ]}
                             alCambiar={setCategoria}
                         />
@@ -141,12 +109,21 @@ function AdminProductos() {
                             tipo="number"
                             nombre="precio"
                             valor={precio}
-                            marcador="Ej: 450000"
+                            marcador="150000"
                             alCambiar={setPrecio}
                         />
 
                         <CampoFormulario
-                            etiqueta="URL de la Imagen"
+                            etiqueta="Stock disponible"
+                            tipo="number"
+                            nombre="stock"
+                            valor={stock}
+                            marcador="10"
+                            alCambiar={setStock}
+                        />
+
+                        <CampoFormulario
+                            etiqueta="URL de la Imagen (opcional)"
                             tipo="text"
                             nombre="imagen"
                             valor={imagen}
@@ -154,74 +131,50 @@ function AdminProductos() {
                             alCambiar={setImagen}
                         />
 
-                        <div className="d-flex gap-2 mt-4">
-                            <Boton texto={idEditando !== null ? "Actualizar" : "Guardar"} tipo="submit" />
-                            {idEditando !== null && (
-                                <button
-                                    type="button"
-                                    className="btn btn-outline-secondary"
-                                    onClick={limpiarFormulario}
-                                >
-                                    Cancelar
-                                </button>
-                            )}
+                        <div className="mt-4">
+                            <Boton texto="Guardar Producto" tipo="submit" />
                         </div>
                     </form>
                 </div>
 
                 <div className="col-12 col-lg-7">
                     <div className="sv-panel">
-                        <h3>Inventario Registrado</h3>
-                        <div className="table-responsive mt-3">
-                            <table className="table table-dark table-hover align-middle">
-                                <thead>
-                                    <tr>
-                                        <th>Imagen</th>
-                                        <th>Nombre</th>
-                                        <th>Categoría</th>
-                                        <th>Precio</th>
-                                        <th>Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {productos.map((prod) => (
-                                        <tr key={prod.id}>
-                                            <td>
-                                                <img
-                                                    src={prod.imagen}
-                                                    alt={prod.nombre}
-                                                    style={{ width: "40px", height: "40px", objectFit: "cover", borderRadius: "4px" }}
-                                                />
-                                            </td>
-                                            <td>{prod.nombre}</td>
-                                            <td>{prod.categoria}</td>
-                                            <td>{formatearPrecio(prod.precio)}</td>
-                                            <td>
-                                                <button
-                                                    className="btn btn-sm btn-outline-warning me-2"
-                                                    onClick={() => handleEditar(prod)}
-                                                >
-                                                    Editar
-                                                </button>
-                                                <button
-                                                    className="btn btn-sm btn-outline-danger"
-                                                    onClick={() => handleEliminar(prod.id)}
-                                                >
-                                                    Eliminar
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                    {productos.length === 0 && (
+                        <h3>Inventario Actual</h3>
+                        {productos.length === 0 ? (
+                            <p className="text-muted mt-3">No hay productos registrados en el inventario.</p>
+                        ) : (
+                            <div className="table-responsive mt-3">
+                                <table className="table table-dark table-hover align-middle">
+                                    <thead>
                                         <tr>
-                                            <td colSpan={5} className="text-center py-3 text-muted">
-                                                No hay productos registrados.
-                                            </td>
+                                            <th>Producto</th>
+                                            <th>Categoría</th>
+                                            <th>Precio</th>
+                                            <th>Stock</th>
+                                            <th>Acción</th>
                                         </tr>
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
+                                    </thead>
+                                    <tbody>
+                                        {productos.map((prod) => (
+                                            <tr key={prod.id}>
+                                                <td>{prod.nombre}</td>
+                                                <td>{prod.categoria}</td>
+                                                <td>${prod.precio.toLocaleString("es-CL")}</td>
+                                                <td>{prod.stock}</td>
+                                                <td>
+                                                    <button
+                                                        className="btn btn-sm btn-outline-danger"
+                                                        onClick={() => eliminarProducto(prod.id)}
+                                                    >
+                                                        Eliminar
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
