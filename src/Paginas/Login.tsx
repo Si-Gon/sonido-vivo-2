@@ -1,68 +1,62 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import CampoFormulario from "../Componentes/moleculas/CampoFormulario";
 import Boton from "../Componentes/atomos/Boton";
-import Aviso from "../Componentes/atomos/Aviso";
 
 function Login() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
-    const [aviso, setAviso] = useState("");
+    
+    const navigate = useNavigate();
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleLogin = (e: React.FormEvent) => {
         e.preventDefault();
         setError("");
 
-        if (!email.trim() || !password) {
-            setError("Por favor completa todos los campos.");
+        if (!email.trim() || !password.trim()) {
+            setError("Por favor ingrese correo y contraseña.");
             return;
         }
 
-        if (!email.includes("@") || !email.includes(".")) {
-            setError("Ingrese un correo electrónico válido.");
-            return;
+        if (email === "admin@sonidovivo.cl" && password === "admin123") {
+            navigate("/admin");
+        } else {
+            navigate("/catalogo");
         }
-
-        setAviso("¡Inicio de sesión exitoso! Bienvenido de vuelta.");
-        setEmail("");
-        setPassword("");
     };
 
     return (
         <section className="sv-seccion">
-            <div className="row justify-content-center">
-                <div className="col-12 col-md-6 col-lg-5">
-                    <form className="sv-panel" onSubmit={handleSubmit}>
-                        <h2 className="text-center mb-4">Iniciar Sesión</h2>
+            <div className="container" style={{ maxWidth: "450px" }}>
+                <form className="sv-panel" onSubmit={handleLogin}>
+                    <h2 className="text-center mb-4">Iniciar Sesión</h2>
 
-                        {error && <p className="text-danger mb-3 text-center">{error}</p>}
+                    {error && <p className="text-danger text-center">{error}</p>}
 
-                        <CampoFormulario
-                            etiqueta="Correo electrónico"
-                            tipo="email"
-                            nombre="email"
-                            valor={email}
-                            marcador="correo@ejemplo.com"
-                            alCambiar={setEmail}
-                        />
+                    <CampoFormulario
+                        etiqueta="Correo electrónico"
+                        tipo="email"
+                        nombre="email"
+                        valor={email}
+                        marcador="correo@ejemplo.com"
+                        alCambiar={setEmail}
+                    />
 
-                        <CampoFormulario
-                            etiqueta="Contraseña"
-                            tipo="password"
-                            nombre="password"
-                            valor={password}
-                            marcador="******"
-                            alCambiar={setPassword}
-                        />
+                    <CampoFormulario
+                        etiqueta="Contraseña"
+                        tipo="password"
+                        nombre="password"
+                        valor={password}
+                        marcador="••••••••"
+                        alCambiar={setPassword}
+                    />
 
-                        <div className="mt-4">
-                            <Boton texto="Ingresar" tipo="submit" />
-                        </div>
-                    </form>
-                </div>
+                    <div className="mt-4">
+                        <Boton texto="Ingresar" tipo="submit" />
+                    </div>
+                </form>
             </div>
-
-            {aviso && <Aviso mensaje={aviso} alCerrar={() => setAviso("")} />}
         </section>
     );
 }
