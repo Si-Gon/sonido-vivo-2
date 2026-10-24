@@ -80,7 +80,7 @@ function Contacto() {
                             tipo="email"
                             nombre="email"
                             valor={email}
-                            marcador="nombre@correo.com"
+                            marcador="correo@ejemplo.com"
                             alCambiar={setEmail}
                         />
 
