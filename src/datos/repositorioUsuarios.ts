@@ -36,7 +36,7 @@ const normalizarEmail = (email: string) => email.trim().toLowerCase();
 const limpiarRut = (rut: string) => rut.replace(/[^0-9kK]/g, "").toUpperCase();
 
 function leerGuardados(): Usuario[] {
-    const guardado = localStorage.getItem(CLAVE);
+    const guardado = localStorage.getItem(clave);
     if (!guardado) return [];
 
     try {
@@ -48,11 +48,11 @@ function leerGuardados(): Usuario[] {
 }
 
 function guardarUsuarios(usuarios: Usuario[]) {
-    localStorage.setItem(CLAVE, JSON.stringify(usuarios));
+    localStorage.setItem(clave, JSON.stringify(usuarios));
 }
 
 export function listarUsuarios(): Usuario[] {
-    if (localStorage.getItem(CLAVE) === null) {
+    if (localStorage.getItem(clave) === null) {
         guardarUsuarios([administrador]);
     }
     return leerGuardados();

@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import CampoFormulario from "../Componentes/moleculas/CampoFormulario";
 import Boton from "../Componentes/atomos/Boton";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -30,18 +29,26 @@ function Login() {
             return;
         }
 
-        if (email === "admin@sonidovivo.cl" && password === "admin123") {
-            navigate("/admin");
-        } else {
-            navigate("/catalogo");
+        const usuario = validarCredenciales(email, password);
+
+        if (!usuario) {
+        setError("Correo o contraseña incorrectos.");
+        return;
         }
+        if (!usuario.activo) {
+        setError("Tu cuenta está desactivada. Contacta a la tienda.");
+        return;
+    }
+
+iniciarSesion({ id: usuario.id, nombre: usuario.nombre, email: usuario.email, rol: usuario.rol });
+navigate(usuario.rol === "Administrador" ? "/admin" : "/catalogo");
     };
 
     return (
         <section className="sv-seccion">
             <div className="container" style={{ maxWidth: "450px" }}>
                 <form className="sv-panel" onSubmit={handleLogin}>
-                    <h2 className="text-center mb-4">Iniciar Sesión</h2>
+                    <h1 className="text-center mb-4">Iniciar Sesión</h1>
 
                     {error && <p className="text-danger text-center">{error}</p>}
 
@@ -68,6 +75,7 @@ function Login() {
                     </div>
                 </form>
             </div>
+            {aviso && <Aviso mensaje={aviso} alCerrar={() => setAviso("")} />}
         </section>
     );
 }

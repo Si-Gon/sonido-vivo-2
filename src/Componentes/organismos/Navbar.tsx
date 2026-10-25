@@ -1,5 +1,12 @@
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
+import { cerrarSesion, useSesion } from "../../datos/sesion";
 
+const sesion = useSesion();
+const navigate = useNavigate();
+const salir = () => {
+    cerrarSesion();
+    navigate("/");
+};
 const claseEnlace = ({ isActive }: { isActive: boolean }) => (
     isActive ? "nav-link active" : "nav-link"
 );
@@ -48,12 +55,32 @@ function Navbar() {
                         <li className="nav-item">
                             <NavLink className={claseEnlace} to="/contacto">Contacto</NavLink>
                         </li>
-                        <li className="nav-item">
-                            <NavLink className={claseEnlace} to="/login">Iniciar sesión</NavLink>
-                        </li>
-                        <li className="nav-item">
-                            <NavLink className={claseEnlace} to="/registro">Registrarse</NavLink>
-                        </li>
+                        {sesion ? (
+                            <>
+                                {sesion.rol === "Administrador" && (
+                                    <li className="nav-item">
+                                        <NavLink className={claseEnlace} to="/admin">Panel</NavLink>
+                                    </li>
+                                )}
+                                <li className="nav-item">
+                                    <span className="navbar-text px-lg-2">Hola, {sesion.nombre}</span>
+                                </li>
+                                <li className="nav-item">
+                                    <button type="button" className="nav-link btn btn-link" onClick={salir}>
+                                    Cerrar sesión
+                                    </button>
+                                </li>
+                            </>
+                        ) : (
+                            <>
+                                <li className="nav-item">
+                                    <NavLink className={claseEnlace} to="/login">Iniciar sesión</NavLink>
+                                </li>
+                                <li className="nav-item">
+                                    <NavLink className={claseEnlace} to="/registro">Registrarse</NavLink>
+                                </li>
+                            </>
+                        )}
 
                     </ul>
                 </div>

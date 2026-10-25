@@ -2,7 +2,6 @@ import { useState } from "react";
 import CampoFormulario from "../Componentes/moleculas/CampoFormulario";
 import CampoSeleccion from "../Componentes/moleculas/CampoSeleccion";
 import Boton from "../Componentes/atomos/Boton";
-import Aviso from "../Componentes/atomos/Aviso";
 import { regionesChile } from "../datos/regiones";
 import { validarRut, formatearRut } from "../utilidades/rut";
 import { useNavigate } from "react-router-dom";
@@ -18,10 +17,9 @@ function Registro() {
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [error, setError] = useState("");
-    const [aviso, setAviso] = useState("");
     const navigate = useNavigate();
 
-
+    
     const regionSeleccionada = regionesChile.find((r) => r.id === region);
     const opcionesComuna = regionSeleccionada
         ? regionSeleccionada.comunas.map((c) => ({ valor: c, etiqueta: c }))
@@ -64,15 +62,22 @@ function Registro() {
             setError("Las contraseñas no coinciden.");
             return;
         }
+        
+        const resultado = registrarUsuario({ nombre, rut, email, region, comuna, password }); 
+            
+            setNombre("");
+            setRut("");
+            setEmail("");
+            setRegion("");
+            setComuna("");
+            setPassword("");
+            setConfirmPassword("");
 
-        setAviso("¡Cuenta creada con éxito! Ya puedes iniciar sesión.");
-        setNombre("");
-        setRut("");
-        setEmail("");
-        setRegion("");
-        setComuna("");
-        setPassword("");
-        setConfirmPassword("");
+        if (!resultado.ok) {
+            setError(resultado.motivo);
+            return;
+            }
+        navigate("/login", { replace: true, state: { registroExitoso: true } });
     };
 
     return (
@@ -161,12 +166,7 @@ function Registro() {
         </section>
     );
 
-        const resultado = registrarUsuario({ nombre, rut, email, region, comuna, password }); 
-    if (!resultado.ok) {
-    setError(resultado.motivo);
-    return;
-    }
-    navigate("/login", { replace: true, state: { registroExitoso: true } });
+        
 }
 
 export default Registro;
