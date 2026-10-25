@@ -1,17 +1,20 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { cerrarSesion, useSesion } from "../../datos/sesion";
 
-const sesion = useSesion();
-const navigate = useNavigate();
-const salir = () => {
-    cerrarSesion();
-    navigate("/");
-};
 const claseEnlace = ({ isActive }: { isActive: boolean }) => (
     isActive ? "nav-link active" : "nav-link"
 );
 
 function Navbar() {
+    // Los hooks van dentro del componente: en la linea del modulo React no tiene contexto y la app
+    // entera se cae (useSyncExternalStore sobre null) en todas las rutas, no solo en esta.
+    const sesion = useSesion();
+    const navigate = useNavigate();
+
+    const salir = () => {
+        cerrarSesion();
+        navigate("/");
+    };
 
     return(
         <nav className="navbar navbar-expand-lg navbar-dark sv-navbar">
