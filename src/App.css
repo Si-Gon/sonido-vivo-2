@@ -167,6 +167,22 @@ main {
     color: var(--laton-palido);
 }
 
+.sv-navbar .navbar-nav .navbar-text,
+.sv-navbar-admin .navbar-nav .navbar-text,
+.sv-navbar .navbar-nav button.nav-link,
+.sv-navbar-admin .navbar-nav button.nav-link {
+    display: block;
+    color: var(--texto-suave);
+    padding: .5rem .9rem;
+    font-family: inherit;
+    font-size: .86rem;
+    font-weight: 500;
+    line-height: 1.5;
+    text-transform: none;
+    letter-spacing: normal;
+    text-decoration: none;
+}
+
 .sv-marca {
     display: flex;
     align-items: center;
