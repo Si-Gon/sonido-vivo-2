@@ -2,6 +2,10 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import CampoFormulario from "../Componentes/moleculas/CampoFormulario";
 import Boton from "../Componentes/atomos/Boton";
+import { useLocation, useNavigate } from "react-router-dom";
+import Aviso from "../Componentes/atomos/Aviso";
+import { validarCredenciales } from "../datos/repositorioUsuarios";
+import { iniciarSesion } from "../datos/sesion";
 
 function Login() {
     const [email, setEmail] = useState("");
@@ -9,6 +13,13 @@ function Login() {
     const [error, setError] = useState("");
     
     const navigate = useNavigate();
+    const location = useLocation();
+
+    const [aviso, setAviso] = useState(() => (
+    (location.state as { registroExitoso?: boolean } | null)?.registroExitoso
+        ? "¡Cuenta creada con éxito! Ya puedes iniciar sesión."
+        : ""
+    ));
 
     const handleLogin = (e: React.FormEvent) => {
         e.preventDefault();

@@ -5,6 +5,9 @@ import Boton from "../Componentes/atomos/Boton";
 import Aviso from "../Componentes/atomos/Aviso";
 import { regionesChile } from "../datos/regiones";
 import { validarRut, formatearRut } from "../utilidades/rut";
+import { useNavigate } from "react-router-dom";
+import { registrarUsuario } from "../datos/repositorioUsuarios";
+
 
 function Registro() {
     const [nombre, setNombre] = useState("");
@@ -16,6 +19,8 @@ function Registro() {
     const [confirmPassword, setConfirmPassword] = useState("");
     const [error, setError] = useState("");
     const [aviso, setAviso] = useState("");
+    const navigate = useNavigate();
+
 
     const regionSeleccionada = regionesChile.find((r) => r.id === region);
     const opcionesComuna = regionSeleccionada
@@ -153,9 +158,15 @@ function Registro() {
                 </div>
             </div>
 
-            {aviso && <Aviso mensaje={aviso} alCerrar={() => setAviso("")} />}
         </section>
     );
+
+        const resultado = registrarUsuario({ nombre, rut, email, region, comuna, password }); 
+    if (!resultado.ok) {
+    setError(resultado.motivo);
+    return;
+    }
+    navigate("/login", { replace: true, state: { registroExitoso: true } });
 }
 
 export default Registro;
