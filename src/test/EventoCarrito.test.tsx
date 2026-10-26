@@ -21,7 +21,7 @@ const producto: Producto = {
     imagen: "ge002.jpg"
 };
 
-test("Prueba 14: agregar al carrito avisa al padre, agrupa el repetido y no supera el stock", () => {
+test("Prueba 7: agregar al carrito avisa al padre, agrupa el repetido y no supera el stock", () => {
     const alAgregar = vi.fn();
     const tarjeta = render(<MemoryRouter><CardProducto producto={producto} alAgregar={alAgregar} /></MemoryRouter>);
 

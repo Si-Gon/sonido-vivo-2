@@ -4,7 +4,7 @@ import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import App from "../App";
 
-test("Prueba 17: el panel pide sesion, y ademas rol de administrador", () => {
+test("Prueba 10: el panel pide sesion, y ademas rol de administrador", () => {
     localStorage.clear();
 
     // Sin sesión: al login.

@@ -10,7 +10,7 @@ beforeEach(() => {
     localStorage.setItem("carrito", JSON.stringify([{ id: 1, cantidad: 2 }]));
 });
 
-test("Prueba 16: sin sesion el carrito no cobra, manda al login y deja las unidades", () => {
+test("Prueba 9: sin sesion el carrito no cobra, manda al login y deja las unidades", () => {
     render(
         <MemoryRouter initialEntries={["/carrito"]}>
             <Routes>

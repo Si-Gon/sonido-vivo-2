@@ -25,7 +25,7 @@ const panel: [string, string][] = [
     ["/admin/usuarios", "Gestión de Usuarios"]
 ];
 
-test("Prueba 15: cada ruta muestra su pagina y el detalle lee el parametro de la URL", () => {
+test("Prueba 8: cada ruta muestra su pagina y el detalle lee el parametro de la URL", () => {
     localStorage.clear();
 
     publicas.forEach(([ruta, titulo]) => {
