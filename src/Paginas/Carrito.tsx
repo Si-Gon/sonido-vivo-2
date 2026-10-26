@@ -4,7 +4,7 @@ import Aviso from "../Componentes/atomos/Aviso";
 import Boton from "../Componentes/atomos/Boton";
 import ItemCarrito from "../Componentes/moleculas/ItemCarrito";
 import { agregarAlCarrito, calcularTotal, contarUnidades, leerCarrito, mensajeDeAgregado, quitarDelCarrito, quitarUnaUnidad, vaciarCarrito, type ItemCarrito as ItemGuardado } from "../datos/carrito";
-import { buscarProducto, descontarStock } from "../datos/repositorioProductos";
+import { buscarProducto } from "../datos/repositorioProductos";
 import type { Producto } from "../datos/productos";
 import { formatearPrecio } from "../utilidades/formato";
 import { leerSesion } from "../datos/sesion";
@@ -47,7 +47,6 @@ function Carrito() {
 
         try {
             const pedido = crearPedido(items);
-            descontarStock(items);
             vaciar();
             setAviso(`Pago realizado por ${formatearPrecio(pedido.total)}`);
         } catch (error) {

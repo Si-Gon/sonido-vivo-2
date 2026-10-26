@@ -1,4 +1,4 @@
-
+import { descontarStock } from "./repositorioProductos";
 import { leerSesion } from "./sesion";
 import { buscarProducto } from "./repositorioProductos";
 import type { ItemCarrito } from "./carrito";
@@ -77,6 +77,41 @@ export function suscribirCambiosPedidos(callback: () => void): () => void {
     };
 }
 
+
+function registrarPedidoConDescuento(pedido: Pedido): void {
+    const claveProductos = "productos";
+    const clavePedidos = "sonido-vivo:pedidos";
+    const productosAnteriores = localStorage.getItem(claveProductos);
+    const pedidosAnteriores = localStorage.getItem(clavePedidos);
+
+    try {
+        descontarStock(
+            pedido.items.map((item) => ({
+                id: item.productoId,
+                cantidad: item.cantidad,
+            }))
+        );
+
+        const pedidos = listarPedidos();
+        guardarPedidos([...pedidos, pedido]);
+    } catch (error) {
+        if (productosAnteriores === null) {
+            localStorage.removeItem(claveProductos);
+        } else {
+            localStorage.setItem(claveProductos, productosAnteriores);
+        }
+
+        if (pedidosAnteriores === null) {
+            localStorage.removeItem(clavePedidos);
+        } else {
+            localStorage.setItem(clavePedidos, pedidosAnteriores);
+        }
+
+        throw error;
+    }
+}
+
+
 export function crearPedido(itemsCarrito: ItemCarrito[]): Pedido {
     const sesion = leerSesion();
 
@@ -130,7 +165,7 @@ export function crearPedido(itemsCarrito: ItemCarrito[]): Pedido {
         fechaCreacion: new Date().toISOString()
     };
 
-    guardarPedidos([...pedidos, pedido]);
+    registrarPedidoConDescuento(pedido);
 
     return pedido;
 }

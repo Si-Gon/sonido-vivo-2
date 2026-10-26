@@ -74,15 +74,51 @@ export function eliminarProducto(id: number): Producto[] {
 }
 
 export function descontarStock(items: { id: number; cantidad: number }[]): Producto[] {
-    const productos = listarProductos().map((producto) => {
-        const item = items.find((entrada) => entrada.id === producto.id);
-        if (!item) return producto;
+    const productos = listarProductos()
+    const cantidadesPorProducto = new Map<number, number>();
 
-        return { ...producto, stock: Math.max(producto.stock - item.cantidad, 0) };
+    for (const item of items) {
+        if (
+            !Number.isInteger(item.id) ||
+            !Number.isInteger(item.cantidad) ||
+            item.cantidad <= 0
+        ) {
+            throw new Error("El carrito contiene cantidades inválidas.");
+        }
+
+        cantidadesPorProducto.set(
+            item.id,
+            (cantidadesPorProducto.get(item.id) ?? 0) + item.cantidad
+        );
+    }
+
+    for (const [id, cantidad] of cantidadesPorProducto) {
+        const producto = productos.find((p) => p.id === id);
+
+        if (!producto) {
+            throw new Error("Uno de los productos del carrito ya no existe.");
+        }
+
+        if (producto.stock < cantidad) {
+            throw new Error(`Stock insuficiente para "${producto.nombre}".`);
+        }
+    }
+
+    const productosActualizados = productos.map((producto) => {
+        const cantidad = cantidadesPorProducto.get(producto.id);
+
+        if (cantidad === undefined) {
+            return producto;
+        }
+
+        return {
+            ...producto,
+            stock: producto.stock - cantidad,
+        };
     });
 
-    guardarProductos(productos);
-    return productos;
+    guardarProductos(productosActualizados);
+    return productosActualizados;
 }
 
 export function restablecerCatalogo(): Producto[] {
