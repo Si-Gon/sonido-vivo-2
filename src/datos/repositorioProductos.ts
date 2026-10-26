@@ -1,6 +1,7 @@
 import { productos as catalogoBase, type Producto } from "./productos";
 
 const CLAVE = "productos";
+const PRODUCTOS_ACTUALIZADOS = "sonido-vivo:productos-actualizados";
 
 export type ProductoNuevo = Omit<Producto, "id">;
 
@@ -9,7 +10,7 @@ function leerGuardados(): Producto[] {
     if (!guardado) return [];
 
     try {
-        const datos = JSON.parse(guardado);
+        const datos: unknown = JSON.parse(guardado);
         return Array.isArray(datos) ? (datos as Producto[]) : [];
     } catch {
         return [];
@@ -18,11 +19,23 @@ function leerGuardados(): Producto[] {
 
 function guardarProductos(productos: Producto[]) {
     localStorage.setItem(CLAVE, JSON.stringify(productos));
+    window.dispatchEvent(new CustomEvent(PRODUCTOS_ACTUALIZADOS));
+}
+
+export function CambiosProductos(callback: () => void): () => void {
+    const alCambiar = () => callback();
+    window.addEventListener(PRODUCTOS_ACTUALIZADOS, alCambiar);
+    window.addEventListener("storage", (alCambiar));
+    
+    return () => {
+        window.removeEventListener(PRODUCTOS_ACTUALIZADOS, alCambiar);
+        window.removeEventListener("storage", alCambiar);
+    }
 }
 
 function iniciarCatalogo() {
     if (localStorage.getItem(CLAVE) === null) {
-        guardarProductos(catalogoBase);
+        localStorage.setItem(CLAVE, JSON.stringify(catalogoBase));
     }
 }
 

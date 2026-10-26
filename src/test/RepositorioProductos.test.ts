@@ -1,0 +1,72 @@
+import { beforeEach, describe, expect, test } from "vitest";
+import {
+    crearProducto,
+    eliminarProducto,
+    listarProductos,
+    restablecerCatalogo,
+    type ProductoNuevo,
+} from "../datos/repositorioProductos";
+
+const productoPrueba: ProductoNuevo = {
+    codigo: "TEST001",
+    categoria: "Accesorios",
+    nombre: "Producto de prueba",
+    marca: "Marca de prueba",
+    modelo: "Modelo de prueba",
+    precio: 12345,
+    stock: 3,
+    descripcion: "Producto utilizado en pruebas automatizadas.",
+    imagen: "https://example.com/producto.jpg",
+};
+
+beforeEach(() => {
+    localStorage.clear();
+});
+
+describe("repositorioProductos", () => {
+    test("crearProducto guarda el producto y listarProductos lo devuelve", () => {
+        const creado = crearProducto(productoPrueba);
+        const productos = listarProductos();
+
+        expect(productos.some((producto) => producto.id === creado.id)).toBe(true);
+        expect(productos.find((producto) => producto.id === creado.id)).toMatchObject(productoPrueba);
+    });
+
+    test("eliminarProducto elimina realmente el producto del repositorio", () => {
+        const creado = crearProducto(productoPrueba);
+        eliminarProducto(creado.id);
+
+        expect(listarProductos().some((producto) => producto.id === creado.id)).toBe(false);
+    });
+
+    test("listarProductos inicializa el catálogo base cuando no hay datos guardados", () => {
+        const productos = listarProductos();
+
+        expect(productos.length).toBeGreaterThan(0);
+        expect(productos.some((producto) => producto.nombre === "Guitarra Acústica Folk")).toBe(true);
+    });
+
+    test("el repositorio notifica a las vistas cuando cambian los productos", () => {
+        let notificaciones = 0;
+        const callback = () => { notificaciones += 1; };
+        
+        const evento = "sonido-vivo:productos-actualizados";
+        window.addEventListener(evento, callback);
+
+        try {
+            const creado = crearProducto(productoPrueba);
+            eliminarProducto(creado.id);
+            expect(notificaciones).toBe(2);
+        } finally {
+            window.removeEventListener("PRODUCTOS_ACTUALIZADOS", callback);
+        }
+    });
+
+    test("restablecerCatalogo conserva el catálogo base disponible", () => {
+        crearProducto(productoPrueba);
+        const restablecidos = restablecerCatalogo();
+
+        expect(listarProductos()).toEqual(restablecidos);
+        expect(listarProductos().some((producto) => producto.nombre === productoPrueba.nombre)).toBe(false);
+    });
+});

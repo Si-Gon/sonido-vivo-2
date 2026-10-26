@@ -15,7 +15,7 @@ function CardProducto({ producto, alAgregar }: Props) {
         <article className="card sv-card h-100">
             <img
             className="card-img-top sv-card-imagen"
-            src={`/img/productos/${producto.imagen}`}
+            src={producto.imagen.startsWith("http") ? producto.imagen : `/img/productos/${producto.imagen}`}
             alt={producto.nombre}
             />
 

@@ -1,18 +1,19 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Aviso from "../Componentes/atomos/Aviso";
 import CardProducto from "../Componentes/moleculas/CardProducto";
 import FiltrosCatalogo from "../Componentes/organismos/FiltrosCatalogo";
 import { agregarAlCarrito, mensajeDeAgregado } from "../datos/carrito";
-import { listarProductos } from "../datos/repositorioProductos";
+import { listarProductos, CambiosProductos } from "../datos/repositorioProductos";
 
 function Catalogo() {
     const [categoria, setCategoria] = useState("todas");
     const [busqueda, setBusqueda] = useState("");
     const [aviso, setAviso] = useState("");
+    const [productos, setProductos] = useState(listarProductos());
 
-    const productos = listarProductos();
+    useEffect(() => CambiosProductos(() => setProductos(listarProductos())), []);
     const textoBuscado = busqueda.trim().toLowerCase();
-
+    
     const productosFiltrados = productos.filter((producto) => {
         const coincideCategoria = categoria === "todas" || producto.categoria === categoria;
         const coincideNombre = textoBuscado === "" || producto.nombre.toLowerCase().includes(textoBuscado);

@@ -1,29 +1,19 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import CampoFormulario from "../Componentes/moleculas/CampoFormulario";
 import CampoSeleccion from "../Componentes/moleculas/CampoSeleccion";
 import Boton from "../Componentes/atomos/Boton";
 import Aviso from "../Componentes/atomos/Aviso";
-
-interface Producto {
-    id: number;
-    nombre: string;
-    categoria: string;
-    precio: number;
-    stock: number;
-    imagen: string;
-}
-
-const productosIniciales: Producto[] = [];
+import { crearProducto, eliminarProducto, listarProductos, CambiosProductos, type ProductoNuevo } from "../datos/repositorioProductos";
+import type { Producto } from "../datos/productos";
 
 type Props = {
     incrustado?: boolean;
 };
 
-
 function AdminProductos({ incrustado }: Props) {
     const Titulo = incrustado ? "h2" : "h1";
     const Subtitulo = incrustado ? "h3" : "h2";
-    const [productos, setProductos] = useState<Producto[]>(productosIniciales);
+    const [productos, setProductos] = useState<Producto[]>(listarProductos());
     const [nombre, setNombre] = useState("");
     const [categoria, setCategoria] = useState("Guitarras");
     const [precio, setPrecio] = useState("");
@@ -31,6 +21,10 @@ function AdminProductos({ incrustado }: Props) {
     const [imagen, setImagen] = useState("");
     const [error, setError] = useState("");
     const [aviso, setAviso] = useState("");
+
+    const recargarProductos = () => setProductos(listarProductos());
+
+    useEffect(() => CambiosProductos(() => setProductos(listarProductos())), []);
 
     const handleCrearProducto = (e: React.FormEvent) => {
         e.preventDefault();
@@ -54,16 +48,20 @@ function AdminProductos({ incrustado }: Props) {
             return;
         }
 
-        const nuevoProducto: Producto = {
-            id: Date.now(),
-            nombre,
+        const nuevoProducto: ProductoNuevo = {
+            codigo: `AD${Date.now().toString().slice(-6)}`,
+            nombre: nombre.trim(),
             categoria,
+            marca: "Sin marca",
+            modelo: "Sin modelo",
             precio: precioNum,
             stock: stockNum,
+            descripcion: "Sin descripción",
             imagen: imagen.trim() || "https://via.placeholder.com/150"
         };
 
-        setProductos([...productos, nuevoProducto]);
+        crearProducto(nuevoProducto);
+        recargarProductos();
         setAviso("Producto agregado exitosamente.");
         setNombre("");
         setCategoria("Guitarras");
@@ -72,8 +70,9 @@ function AdminProductos({ incrustado }: Props) {
         setImagen("");
     };
 
-    const eliminarProducto = (id: number) => {
-        setProductos(productos.filter((p) => p.id !== id));
+    const EliminarProducto = (id: number) => {
+        eliminarProducto(id);
+        recargarProductos();
         setAviso("Producto eliminado del inventario.");
     };
 
@@ -171,7 +170,7 @@ function AdminProductos({ incrustado }: Props) {
                                                 <td>
                                                     <button
                                                         className="btn btn-sm btn-outline-danger"
-                                                        onClick={() => eliminarProducto(prod.id)}
+                                                        onClick={() => EliminarProducto(prod.id)}
                                                     >
                                                         Eliminar
                                                     </button>
