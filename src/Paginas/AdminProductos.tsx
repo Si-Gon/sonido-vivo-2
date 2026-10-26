@@ -3,7 +3,7 @@ import CampoFormulario from "../Componentes/moleculas/CampoFormulario";
 import CampoSeleccion from "../Componentes/moleculas/CampoSeleccion";
 import Boton from "../Componentes/atomos/Boton";
 import Aviso from "../Componentes/atomos/Aviso";
-import { crearProducto, eliminarProducto, listarProductos, CambiosProductos, type ProductoNuevo } from "../datos/repositorioProductos";
+import { crearProducto, eliminarProducto, listarProductos, CambiosProductos, actualizarProducto, type ProductoNuevo } from "../datos/repositorioProductos";
 import type { Producto } from "../datos/productos";
 
 type Props = {
@@ -19,6 +19,7 @@ function AdminProductos({ incrustado }: Props) {
     const [precio, setPrecio] = useState("");
     const [stock, setStock] = useState("");
     const [imagen, setImagen] = useState("");
+    const [productoEditandoId, setProductoEditandoId] = useState<number | null>(null);
     const [error, setError] = useState("");
     const [aviso, setAviso] = useState("");
 
@@ -26,11 +27,43 @@ function AdminProductos({ incrustado }: Props) {
 
     useEffect(() => CambiosProductos(() => setProductos(listarProductos())), []);
 
+    const limpiarFormulario = () => {
+        setNombre("");
+        setCategoria("Guitarras");
+        setPrecio("");
+        setStock("");
+        setImagen("");
+        setProductoEditandoId(null);
+        setError("");
+    };
+
+    const cancelarEdicion = () => {
+        limpiarFormulario();
+        setAviso("Edición cancelada. No se guardaron los cambios.");
+    };
+    
+    const iniciarEdicion = (producto: Producto) => {
+        setProductoEditandoId(producto.id);
+        setNombre(producto.nombre);
+        setCategoria(producto.categoria);
+        setPrecio(String(producto.precio));
+        setStock(String(producto.stock));
+        setImagen(producto.imagen);
+        setError("");
+        setAviso("");
+
+        window.scrollTo({
+            top: 0,
+            behavior: "smooth"
+        });
+    };
+
     const handleCrearProducto = (e: React.FormEvent) => {
         e.preventDefault();
         setError("");
+        setAviso("");
 
-        if (!nombre.trim() || !categoria.trim() || !precio || !stock) {
+        if (!nombre.trim() || !categoria.trim() || !precio.trim() || !stock.trim()) {
             setError("Todos los campos marcados son obligatorios.");
             return;
         }
@@ -48,26 +81,54 @@ function AdminProductos({ incrustado }: Props) {
             return;
         }
 
-        const nuevoProducto: ProductoNuevo = {
-            codigo: `AD${Date.now().toString().slice(-6)}`,
+        const datos: Partial<ProductoNuevo> = {
             nombre: nombre.trim(),
             categoria,
-            marca: "Sin marca",
-            modelo: "Sin modelo",
             precio: precioNum,
             stock: stockNum,
-            descripcion: "Sin descripción",
             imagen: imagen.trim() || "https://via.placeholder.com/150"
         };
 
-        crearProducto(nuevoProducto);
-        recargarProductos();
-        setAviso("Producto agregado exitosamente.");
-        setNombre("");
-        setCategoria("Guitarras");
-        setPrecio("");
-        setStock("");
-        setImagen("");
+        try {
+            if (productoEditandoId !== null) {
+                const productoExiste = listarProductos().some(
+                    (producto) => producto.id === productoEditandoId
+                );
+
+                if (!productoExiste) {
+                    setError(
+                        "El producto ya no existe en el inventario. Actualiza la lista."
+                    );
+                    recargarProductos();
+                    limpiarFormulario();
+                    return;
+                }
+
+                actualizarProducto(productoEditandoId, datos);
+
+                setAviso("Producto actualizado correctamente.");
+            } else {
+                const nuevoProducto: ProductoNuevo = {
+                    codigo: `AD${Date.now().toString().slice(-6)}`,
+                    nombre: nombre.trim(),
+                    categoria,
+                    marca: "Sin marca",
+                    modelo: "Sin modelo",
+                    precio: precioNum,
+                    stock: stockNum,
+                    descripcion: "Sin descripción",
+                    imagen: imagen.trim() || "https://via.placeholder.com/150"
+                };
+                crearProducto(nuevoProducto);
+                setAviso("Producto agregado exitosamente.");
+            }
+            recargarProductos();
+            limpiarFormulario();
+        } catch {
+            setError("Ocurrió un error al guardar el producto. Intenta nuevamente.");
+            recargarProductos();
+        }
+
     };
 
     const EliminarProducto = (id: number) => {
@@ -83,7 +144,7 @@ function AdminProductos({ incrustado }: Props) {
             <div className="row g-4">
                 <div className="col-12 col-lg-5">
                     <form className="sv-panel" onSubmit={handleCrearProducto}>
-                        <Subtitulo>Agregar Producto</Subtitulo>
+                        <Subtitulo>{productoEditandoId !== null ? "Editar Producto" : "Agregar Producto"}</Subtitulo>
 
                         {error && <p className="text-danger mb-3">{error}</p>}
 
@@ -137,8 +198,13 @@ function AdminProductos({ incrustado }: Props) {
                             alCambiar={setImagen}
                         />
 
-                        <div className="mt-4">
-                            <Boton texto="Guardar Producto" tipo="submit" />
+                        <div className="mt-4 d-flex flex-wrap gap-2">
+                            <Boton texto={productoEditandoId !== null ? "Guardar Cambios" : "Guardar Producto"} tipo="submit" />
+                            {productoEditandoId !== null && (
+                                <button type="button" className="btn btn-outline-light" onClick={cancelarEdicion}>
+                                    Cancelar
+                                </button>
+                            )}
                         </div>
                     </form>
                 </div>
@@ -157,7 +223,7 @@ function AdminProductos({ incrustado }: Props) {
                                             <th>Categoría</th>
                                             <th>Precio</th>
                                             <th>Stock</th>
-                                            <th>Acción</th>
+                                            <th>Acciones</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -168,6 +234,12 @@ function AdminProductos({ incrustado }: Props) {
                                                 <td>${prod.precio.toLocaleString("es-CL")}</td>
                                                 <td>{prod.stock}</td>
                                                 <td>
+                                                    <button
+                                                        type="button"
+                                                        className="btn btn-sm btn-outline-info"
+                                                        onClick={() => iniciarEdicion(prod)}>
+                                                        Editar
+                                                    </button>
                                                     <button
                                                         className="btn btn-sm btn-outline-danger"
                                                         onClick={() => EliminarProducto(prod.id)}

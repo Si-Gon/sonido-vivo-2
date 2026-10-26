@@ -16,15 +16,11 @@ export function validarRut(rut: string): boolean {
     }
 
     const resto = 11 - (suma % 11);
-    let dvEsperado = "";
+    
+    const dvEsperado = resto === 11 ? "0" : resto === 10 ? "K" : resto.toString();
+    return dvEsperado === dvIngresado;
 
-    if (resto === 11) dvEsperado = "0";
-    else if (resto === 10) dvEsperado = "K";
-    else dvEsperado = resto.toString();
-
-    return dvIngresado === dvEsperado;
 }
-
 export function formatearRut(rut: string): string {
     const limpio = rut.replace(/[^0-9kK]/g, "").toUpperCase();
     if (limpio.length <= 1) return limpio;
