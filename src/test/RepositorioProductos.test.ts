@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import {
+    actualizarProducto,
     crearProducto,
     eliminarProducto,
     listarProductos,
@@ -58,7 +59,7 @@ describe("repositorioProductos", () => {
             eliminarProducto(creado.id);
             expect(notificaciones).toBe(2);
         } finally {
-            window.removeEventListener("PRODUCTOS_ACTUALIZADOS", callback);
+            window.removeEventListener("sonido-vivo:productos-actualizados", callback);
         }
     });
 
@@ -68,5 +69,25 @@ describe("repositorioProductos", () => {
 
         expect(listarProductos()).toEqual(restablecidos);
         expect(listarProductos().some((producto) => producto.nombre === productoPrueba.nombre)).toBe(false);
+    });
+
+    test("actualizarProducto guarda los cambios del producto", () => {
+    const creado = crearProducto(productoPrueba);
+
+    actualizarProducto(creado.id, {
+        nombre: "Producto editado",
+        precio: 20000,
+        stock: 8,
+    });
+
+    const actualizado = listarProductos().find(
+        (producto) => producto.id === creado.id
+    );
+
+    expect(actualizado).toMatchObject({
+        nombre: "Producto editado",
+        precio: 20000,
+        stock: 8,
+    });
     });
 });

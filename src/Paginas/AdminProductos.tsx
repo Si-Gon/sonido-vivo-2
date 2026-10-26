@@ -71,12 +71,12 @@ function AdminProductos({ incrustado }: Props) {
         const precioNum = Number(precio);
         const stockNum = Number(stock);
 
-        if (isNaN(precioNum) || precioNum <= 0) {
+        if (!Number.isFinite(precioNum) || precioNum <= 0) {
             setError("El precio debe ser un número positivo.");
             return;
         }
 
-        if (isNaN(stockNum) || stockNum < 0) {
+        if (!Number.isFinite(stockNum) || stockNum < 0) {
             setError("El stock no puede ser negativo.");
             return;
         }
@@ -241,6 +241,7 @@ function AdminProductos({ incrustado }: Props) {
                                                         Editar
                                                     </button>
                                                     <button
+                                                        type="button"
                                                         className="btn btn-sm btn-outline-danger"
                                                         onClick={() => EliminarProducto(prod.id)}
                                                     >
