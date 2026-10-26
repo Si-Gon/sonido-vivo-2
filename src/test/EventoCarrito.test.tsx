@@ -70,7 +70,7 @@ test("Prueba 7: agregar al carrito avisa al padre, agrupa el repetido y no super
     fireEvent.click(screen.getByText("Pagar"));
 
     expect(screen.getByText("El carrito está vacío.").textContent).toBe("El carrito está vacío.");
-    expect(screen.getByText("Pago realizado por $1.319.960").textContent).toBe("Pago realizado por $1.319.960");
+    expect(screen.getByText("/despacho/1").textContent).toBeTruthy();
     expect(buscarProducto(7)?.stock).toBe(0);
     expect(localStorage.getItem("carrito")).toBeNull();
 

@@ -48,7 +48,7 @@ function Carrito() {
         try {
             const pedido = crearPedido(items);
             vaciar();
-            setAviso(`Pago realizado por ${formatearPrecio(pedido.total)}`);
+            navigate(`/despacho/${pedido.id}`);
         } catch (error) {
             const mensaje = error instanceof Error
                 ? error.message

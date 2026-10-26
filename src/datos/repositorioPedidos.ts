@@ -199,6 +199,40 @@ export function guardarDatosDespacho(
     return pedidoActualizado;
 }
 
+export function actualizarEstadoPedido(
+    pedidoId: number,
+    estado: EstadoPedido
+): Pedido {
+    const estadosValidos: EstadoPedido[] = [
+        "Pendiente de despacho",
+        "En preparación",
+        "Despachado",
+        "Entregado",
+        "Cancelado"
+    ];
+
+    if (!estadosValidos.includes(estado)) {
+        throw new Error("El estado del pedido no es válido.");
+    }
+
+    const pedidos = listarPedidos();
+    const indice = pedidos.findIndex((pedido) => pedido.id === pedidoId);
+
+    if (indice === -1) {
+        throw new Error("No se encontró el pedido.");
+    }
+
+    const pedidoActualizado: Pedido = {
+        ...pedidos[indice],
+        estado
+    };
+
+    pedidos[indice] = pedidoActualizado;
+    guardarPedidos(pedidos);
+
+    return pedidoActualizado;
+}
+
 export function restablecerPedidosParaPruebas(): void {
     localStorage.removeItem(CLAVE);
     window.dispatchEvent(new Event(EVENTO_CAMBIO));

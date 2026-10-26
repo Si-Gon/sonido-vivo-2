@@ -17,6 +17,7 @@ import AdminProductos from './Paginas/AdminProductos'
 import AdminUsuarios from './Paginas/AdminUsuarios'
 import NoEncontrada from './Paginas/NoEncontrada'
 import RutaPrivada from './Componentes/organismos/RutaPrivada'
+import Despacho from './Paginas/Despacho'
 
 function App() {
 
@@ -47,6 +48,11 @@ function App() {
         <Route
         path='/carrito'
         element={<Carrito/>}
+        />
+
+        <Route
+        path="/despacho/:id"
+        element={<Despacho />}
         />
 
         <Route
