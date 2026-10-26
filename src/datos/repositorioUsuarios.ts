@@ -20,6 +20,10 @@ export type ResultadoRegistro =
     | { ok: true; usuario: Usuario }
     | { ok: false; motivo: string };
 
+export type ResultadoOperacion =
+    | { ok: true; usuario: Usuario }
+    | { ok: false; motivo: string };
+
 const administrador: Usuario = {
     id: 1,
     nombre: "Administrador",
@@ -86,4 +90,116 @@ export function registrarUsuario(datos: UsuarioNuevo): ResultadoRegistro {
 export function validarCredenciales(email: string, password: string): Usuario | undefined {
     const correo = normalizarEmail(email);
     return listarUsuarios().find((u) => u.email === correo && u.password === password);
+}
+
+export function crearUsuarioAdministrado(
+    datos: Omit<Usuario, "id">
+): ResultadoRegistro {
+    const usuarios = listarUsuarios();
+    const email = normalizarEmail(datos.email);
+
+    if (!esRolValido(datos.rol)) {
+        return { ok: false, motivo: "El rol no es válido." };
+    }
+
+    if (usuarios.some((u) => normalizarEmail(u.email) === email)) {
+        return { ok: false, motivo: "Ya existe una cuenta con ese correo." };
+    }
+
+    if (usuarios.some((u) => limpiarRut(u.rut) === limpiarRut(datos.rut))) {
+        return { ok: false, motivo: "Ya existe una cuenta con ese RUT." };
+    }
+
+    const usuario: Usuario = {
+        ...datos,
+        id: usuarios.reduce((mayor, u) => Math.max(mayor, u.id), 0) + 1,
+        nombre: datos.nombre.trim(),
+        email,
+    };
+
+    guardarUsuarios([...usuarios, usuario]);
+
+    return { ok: true, usuario };
+}
+
+export function cambiarRolUsuario(
+    id: number,
+    rol: Rol
+): ResultadoOperacion {
+    if (!esRolValido(rol)) {
+        return { ok: false, motivo: "El rol no es válido." };
+    }
+
+    const usuarios = listarUsuarios();
+    const usuario = usuarios.find((u) => u.id === id);
+
+    if (!usuario) {
+        return { ok: false, motivo: "Usuario no encontrado." };
+    }
+
+    if (
+        usuario.activo &&
+        usuario.rol === "Administrador" &&
+        rol !== "Administrador" &&
+        !usuarios.some(
+            (u) => u.id !== id && u.activo && u.rol === "Administrador"
+        )
+    ) {
+        return {
+            ok: false,
+            motivo: "No puedes quitar el rol al último administrador activo."
+        };
+    }
+
+    const actualizados = usuarios.map((u) =>
+        u.id === id ? { ...u, rol } : u
+    );
+
+    guardarUsuarios(actualizados);
+
+    return {
+        ok: true,
+        usuario: actualizados.find((u) => u.id === id)!
+    };
+}
+
+export function cambiarEstadoUsuario(
+    id: number,
+    activo: boolean
+): ResultadoOperacion {
+    const usuarios = listarUsuarios();
+    const usuario = usuarios.find((u) => u.id === id);
+
+    if (!usuario) {
+        return { ok: false, motivo: "Usuario no encontrado." };
+    }
+
+    if (
+        !activo &&
+        usuario.activo &&
+        usuario.rol === "Administrador" &&
+        !usuarios.some(
+            (u) => u.id !== id && u.activo && u.rol === "Administrador"
+        )
+    ) {
+        return {
+            ok: false,
+            motivo: "No puedes desactivar al último administrador activo."
+        };
+    }
+
+    const actualizados = usuarios.map((u) =>
+        u.id === id ? { ...u, activo } : u
+    );
+
+    guardarUsuarios(actualizados);
+
+    return {
+        ok: true,
+        usuario: actualizados.find((u) => u.id === id)!
+    };
+}
+
+function esRolValido(rol: unknown): rol is Rol {
+    return rol === "Cliente" || rol === "Administrador";
 }

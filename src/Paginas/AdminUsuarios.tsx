@@ -4,26 +4,7 @@ import CampoSeleccion from "../Componentes/moleculas/CampoSeleccion";
 import Boton from "../Componentes/atomos/Boton";
 import Aviso from "../Componentes/atomos/Aviso";
 import { validarRut, formatearRut } from "../utilidades/rut";
-
-interface Usuario {
-    id: number;
-    nombre: string;
-    rut: string;
-    email: string;
-    rol: "Cliente" | "Administrador";
-    activo: boolean;
-}
-
-const usuariosIniciales: Usuario[] = [
-    {
-        id: 1,
-        nombre: "Administrador",
-        rut: "12.345.678-5",
-        email: "admin@sonidovivo.cl",
-        rol: "Administrador",
-        activo: true
-    }
-];
+import { listarUsuarios, crearUsuarioAdministrado, cambiarRolUsuario as guardarCambioRol, cambiarEstadoUsuario, type Usuario, type Rol } from "../datos/repositorioUsuarios";
 
 type Props = {
     incrustado?: boolean;
@@ -32,9 +13,12 @@ type Props = {
 function AdminUsuarios({ incrustado }: Props) {
     const Titulo = incrustado ? "h2" : "h1";
     const Subtitulo = incrustado ? "h3" : "h2";
-    const [usuarios, setUsuarios] = useState<Usuario[]>(usuariosIniciales);
+    const [usuarios, setUsuarios] = useState<Usuario[]>(() => listarUsuarios());
     const [nombre, setNombre] = useState("");
     const [rut, setRut] = useState("");
+    const [region, setRegion] = useState("");
+    const [comuna, setComuna] = useState("");
+    const [password, setPassword] = useState("");
     const [email, setEmail] = useState("");
     const [rol, setRol] = useState<"Cliente" | "Administrador">("Cliente");
     const [error, setError] = useState("");
@@ -63,38 +47,58 @@ function AdminUsuarios({ incrustado }: Props) {
             return;
         }
 
-        const nuevoUsuario: Usuario = {
-            id: Date.now(),
+        const resultado = crearUsuarioAdministrado({
             nombre,
             rut,
             email,
+            region,
+            comuna,
+            password,
             rol,
             activo: true
-        };
+        });
 
-        setUsuarios([...usuarios, nuevoUsuario]);
+        if (!resultado.ok) {
+            setError(resultado.motivo);
+            return;
+        }
+
+
+
+        setUsuarios(listarUsuarios());
         setAviso("Usuario registrado exitosamente.");
         setNombre("");
         setRut("");
+        setRegion("");
+        setComuna("");
+        setPassword("");
         setEmail("");
         setRol("Cliente");
     };
 
-    const toggleEstadoUsuario = (id: number) => {
-        setUsuarios(
-            usuarios.map((u) =>
-                u.id === id ? { ...u, activo: !u.activo } : u
-            )
-        );
+    const toggleEstadoUsuario = (usuario: Usuario) => {
+        const resultado = cambiarEstadoUsuario(usuario.id, !usuario.activo);
+
+        if (!resultado.ok) {
+            setError(resultado.motivo);
+            return;
+        }
+        
+        setUsuarios(listarUsuarios());
         setAviso("Estado de usuario actualizado.");
     };
 
-    const cambiarRolUsuario = (id: number, nuevoRol: "Cliente" | "Administrador") => {
-        setUsuarios(
-            usuarios.map((u) =>
-                u.id === id ? { ...u, rol: nuevoRol } : u
-            )
-        );
+    const cambiarRolUsuario = (id: number, nuevoRol : Rol) => {
+        const resultado = guardarCambioRol(id, nuevoRol);
+
+        if (!resultado.ok) {
+            setError(resultado.motivo);
+            setUsuarios(listarUsuarios());
+            return;
+        }
+        
+        setUsuarios(listarUsuarios());
+        setError("");
         setAviso("Rol actualizado correctamente.");
     };
 
@@ -203,7 +207,7 @@ function AdminUsuarios({ incrustado }: Props) {
                                                     className={`btn btn-sm ${
                                                         usr.activo ? "btn-outline-danger" : "btn-outline-success"
                                                     }`}
-                                                    onClick={() => toggleEstadoUsuario(usr.id)}
+                                                    onClick={() => toggleEstadoUsuario(usr)}
                                                 >
                                                     {usr.activo ? "Desactivar" : "Activar"}
                                                 </button>
