@@ -62,7 +62,7 @@ function Contacto() {
             <div className="row g-4 align-items-stretch">
                 <div className="col-12 col-lg-6 d-flex flex-column">
                     <form className="sv-panel flex-grow-1 d-flex flex-column" onSubmit={handleSubmit}>
-                        <h3>Envíanos tu consulta</h3>
+                        <h2>Envíanos tu consulta</h2>
 
                         {error && <p className="text-danger mb-3">{error}</p>}
 
@@ -124,7 +124,7 @@ function Contacto() {
 
                 <div className="col-12 col-lg-6 d-flex flex-column">
                     <div className="sv-panel flex-grow-1 d-flex flex-column">
-                        <h3>Nuestra Ubicación</h3>
+                        <h2>Nuestra Ubicación</h2>
                         <p className="sv-pendiente mb-3">Viña del Mar, Región de Valparaíso</p>
                         
                         <div style={{ flex: 1, minHeight: "450px", width: "100%", borderRadius: "8px", overflow: "hidden" }}>

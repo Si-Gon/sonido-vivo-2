@@ -14,8 +14,6 @@ function Login() {
     const navigate = useNavigate();
     const location = useLocation();
 
-    // El login recibe dos cosas: que la cuenta se acaba de crear, o que la pantalla de origen pide
-    // sesión (el carrito al pagar, o el panel). Las dos se muestran como aviso.
     const veniaDe = location.state as
         { registroExitoso?: boolean; desde?: string; mensaje?: string } | null;
 
@@ -51,14 +49,13 @@ function Login() {
 
         iniciarSesion({ id: usuario.id, nombre: usuario.nombre, email: usuario.email, rol: usuario.rol });
 
-        // Vuelve a la pantalla que pidió la sesión, si el rol alcanza para entrar ahí.
         const porRol = usuario.rol === "Administrador" ? "/admin" : "/catalogo";
         const destino = veniaDe?.desde;
         const alcanza = destino
             ? (destino.indexOf("/admin") === 0 ? usuario.rol === "Administrador" : true)
             : false;
 
-        navigate(alcanza && destino ? destino : porRol);
+        navigate(alcanza && destino ? destino : porRol, { replace: true });
     };
 
     return (

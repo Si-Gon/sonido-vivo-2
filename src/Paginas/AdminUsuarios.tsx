@@ -25,7 +25,13 @@ const usuariosIniciales: Usuario[] = [
     }
 ];
 
-function AdminUsuarios() {
+type Props = {
+    incrustado?: boolean;
+};
+
+function AdminUsuarios({ incrustado }: Props) {
+    const Titulo = incrustado ? "h2" : "h1";
+    const Subtitulo = incrustado ? "h3" : "h2";
     const [usuarios, setUsuarios] = useState<Usuario[]>(usuariosIniciales);
     const [nombre, setNombre] = useState("");
     const [rut, setRut] = useState("");
@@ -94,12 +100,12 @@ function AdminUsuarios() {
 
     return (
         <section className="sv-seccion sv-seccion-ancha">
-            <h1>Gestión de Usuarios</h1>
+            <Titulo>Gestión de Usuarios</Titulo>
 
             <div className="row g-4">
                 <div className="col-12 col-lg-5">
                     <form className="sv-panel" onSubmit={handleCrearUsuario}>
-                        <h3>Registrar Nuevo Usuario</h3>
+                        <Subtitulo>Registrar Nuevo Usuario</Subtitulo>
 
                         {error && <p className="text-danger mb-3">{error}</p>}
 
@@ -149,7 +155,7 @@ function AdminUsuarios() {
 
                 <div className="col-12 col-lg-7">
                     <div className="sv-panel">
-                        <h3>Usuarios Registrados</h3>
+                        <Subtitulo>Usuarios Registrados</Subtitulo>
                         <div className="table-responsive mt-3">
                             <table className="table table-dark table-hover align-middle">
                                 <thead>

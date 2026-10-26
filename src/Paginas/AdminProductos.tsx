@@ -15,7 +15,14 @@ interface Producto {
 
 const productosIniciales: Producto[] = [];
 
-function AdminProductos() {
+type Props = {
+    incrustado?: boolean;
+};
+
+
+function AdminProductos({ incrustado }: Props) {
+    const Titulo = incrustado ? "h2" : "h1";
+    const Subtitulo = incrustado ? "h3" : "h2";
     const [productos, setProductos] = useState<Producto[]>(productosIniciales);
     const [nombre, setNombre] = useState("");
     const [categoria, setCategoria] = useState("Guitarras");
@@ -72,12 +79,12 @@ function AdminProductos() {
 
     return (
         <section className="sv-seccion sv-seccion-ancha">
-            <h1>Gestión de Productos</h1>
+            <Titulo>Gestión de Productos</Titulo>
 
             <div className="row g-4">
                 <div className="col-12 col-lg-5">
                     <form className="sv-panel" onSubmit={handleCrearProducto}>
-                        <h3>Agregar Producto</h3>
+                        <Subtitulo>Agregar Producto</Subtitulo>
 
                         {error && <p className="text-danger mb-3">{error}</p>}
 
@@ -139,7 +146,7 @@ function AdminProductos() {
 
                 <div className="col-12 col-lg-7">
                     <div className="sv-panel">
-                        <h3>Inventario Actual</h3>
+                        <Subtitulo>Inventario Actual</Subtitulo>
                         {productos.length === 0 ? (
                             <p className="text-muted mt-3">No hay productos registrados en el inventario.</p>
                         ) : (

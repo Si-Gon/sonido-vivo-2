@@ -64,6 +64,11 @@ function Registro() {
         }
         
         const resultado = registrarUsuario({ nombre, rut, email, region, comuna, password }); 
+        
+        if (!resultado.ok) {
+            setError(resultado.motivo);
+            return;
+            }
             
             setNombre("");
             setRut("");
@@ -73,10 +78,6 @@ function Registro() {
             setPassword("");
             setConfirmPassword("");
 
-        if (!resultado.ok) {
-            setError(resultado.motivo);
-            return;
-            }
         navigate("/login", { replace: true, state: { registroExitoso: true } });
     };
 
