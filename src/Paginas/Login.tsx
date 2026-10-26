@@ -15,12 +15,17 @@ function Login() {
     const location = useLocation();
 
     const veniaDe = location.state as
-        { registroExitoso?: boolean; desde?: string; mensaje?: string } | null;
+        { registroExitoso?: boolean; desde?: string; mensaje?: string; aviso?: string } | null;
 
     const [aviso, setAviso] = useState(() => {
+        if (veniaDe?.aviso) {
+            return veniaDe.aviso;
+        }
+        
         if (veniaDe?.mensaje) {
             return veniaDe.mensaje;
         }
+        
         if (veniaDe?.registroExitoso) {
             return "¡Cuenta creada con éxito! Ya puedes iniciar sesión.";
         }

@@ -8,6 +8,7 @@ import { buscarProducto, descontarStock } from "../datos/repositorioProductos";
 import type { Producto } from "../datos/productos";
 import { formatearPrecio } from "../utilidades/formato";
 import { leerSesion } from "../datos/sesion";
+import {crearPedido} from "../datos/repositorioPedidos";
 
 function Carrito() {
     const navigate = useNavigate();
@@ -31,19 +32,31 @@ function Carrito() {
     };
 
     const pagar = () => {
-        // Comprar pide sesión: el visitante puede armar el carrito, pero no pagar. Sin sesión se va
-        // al login y al entrar vuelve acá, con lo que tenía, porque el carrito no se toca.
+        if (items.length === 0) {
+            setAviso("El carrito está vacío.");
+            return;
+        }
+
         if (!leerSesion()) {
             navigate("/login", {
-                state: { desde: "/carrito", mensaje: "Para comprar tienes que iniciar sesión." }
+                state: 
+                    {mensaje: "Para comprar tienes que iniciar sesión."}
             });
             return;
         }
 
-        const monto = formatearPrecio(calcularTotal(items));
-        descontarStock(items);
-        setAviso(`Pago realizado por ${monto}`);
-        vaciar();
+        try {
+            const pedido = crearPedido(items);
+            descontarStock(items);
+            vaciar();
+            setAviso(`Pago realizado por ${formatearPrecio(pedido.total)}`);
+        } catch (error) {
+            const mensaje = error instanceof Error
+                ? error.message
+                : "No se pudo completar la compra.";
+
+            setAviso(mensaje);
+        }
     };
 
     const total = calcularTotal(items);
