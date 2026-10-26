@@ -1,4 +1,4 @@
-import { descontarStock } from "./repositorioProductos";
+import { actualizarProducto, descontarStock } from "./repositorioProductos";
 import { leerSesion } from "./sesion";
 import { buscarProducto } from "./repositorioProductos";
 import type { ItemCarrito } from "./carrito";
@@ -123,6 +123,35 @@ export function crearPedido(itemsCarrito: ItemCarrito[]): Pedido {
         throw new Error("No puedes crear un pedido sin productos.");
     }
 
+    const cantidadesPorProducto = new Map<number, number>();
+
+    for (const item of itemsCarrito) {
+        if (
+            !Number.isInteger(item.id) ||
+            !Number.isInteger(item.cantidad) ||
+            item.cantidad <= 0
+        ) {
+            throw new Error("El carrito contiene cantidades inválidas.");
+        }
+
+        const cantidadAcumulada =
+            (cantidadesPorProducto.get(item.id) ?? 0) + item.cantidad;
+
+        cantidadesPorProducto.set(item.id, cantidadAcumulada);
+    }
+
+    for (const [productoId, cantidadTotal] of cantidadesPorProducto) {
+        const producto = buscarProducto(productoId);
+
+        if (!producto) {
+            throw new Error("Uno de los productos del carrito ya no existe.");
+        }
+
+        if (producto.stock < cantidadTotal) {
+            throw new Error(`Stock insuficiente para "${producto.nombre}".`);
+        }
+    }
+
     const itemsPedido: ItemPedido[] = itemsCarrito.map((item) => {
         if (!Number.isInteger(item.id) || !Number.isInteger(item.cantidad) || item.cantidad <= 0) {
             throw new Error("El carrito contiene cantidades inválidas.");
@@ -199,39 +228,106 @@ export function guardarDatosDespacho(
     return pedidoActualizado;
 }
 
-export function actualizarEstadoPedido(
-    pedidoId: number,
-    estado: EstadoPedido
-): Pedido {
-    const estadosValidos: EstadoPedido[] = [
-        "Pendiente de despacho",
-        "En preparación",
-        "Despachado",
-        "Entregado",
-        "Cancelado"
-    ];
+    export function actualizarEstadoPedido(
+        pedidoId: number,
+        estado: EstadoPedido
+        ): Pedido {
+        const estadosValidos: EstadoPedido[] = [
+            "Pendiente de despacho",
+            "En preparación",
+            "Despachado",
+            "Entregado",
+            "Cancelado"
+        ];
 
-    if (!estadosValidos.includes(estado)) {
-        throw new Error("El estado del pedido no es válido.");
-    }
+        if (!estadosValidos.includes(estado)) {
+            throw new Error("El estado del pedido no es válido.");
+        }
 
-    const pedidos = listarPedidos();
-    const indice = pedidos.findIndex((pedido) => pedido.id === pedidoId);
+        const pedidos = listarPedidos();
+        const indice = pedidos.findIndex((pedido) => pedido.id === pedidoId);
+        
+        if (indice === -1) {
+            throw new Error("No se encontró el pedido.");
+        }
+    
+        const pedidoAnterior = pedidos[indice];
+    
+        if (pedidoAnterior.estado === "Cancelado" && estado !== "Cancelado") {
+            throw new Error("No se puede cambiar el estado de un pedido cancelado.");
+        }
+    
+        if (pedidoAnterior.estado === estado) {
+            return pedidoAnterior;
+        }
+    
+        if (estado === "Cancelado") {
+            const productosAnteriores = localStorage.getItem("productos");
+            const pedidosAnteriores = localStorage.getItem("sonido-vivo:pedidos");
+        
+            try {
+                const productosDevueltos = new Set<number>();
+            
+                for (const item of pedidoAnterior.items) {
+                    if (productosDevueltos.has(item.productoId)) {
+                        continue;
+                    }
+                
+                    productosDevueltos.add(item.productoId);
+                
+                    const cantidadTotal = pedidoAnterior.items
+                        .filter((otro) => otro.productoId === item.productoId)
+                        .reduce((total, otro) => total + otro.cantidad, 0);
+                
+                    const producto = buscarProducto(item.productoId);
+                
+                    if (!producto) {
+                        throw new Error(
+                            `No se encontró el producto "${item.nombre}" para devolver el stock.`
+                        );
+                    }
+                
+                    actualizarProducto(producto.id, {
+                        ...producto,
+                        stock: producto.stock + cantidadTotal
+                    });
+                }
+            
+                const pedidoActualizado: Pedido = {
+                    ...pedidoAnterior,
+                    estado
+                };
+            
+            pedidos[indice] = pedidoActualizado;
+            guardarPedidos(pedidos);
 
-    if (indice === -1) {
-        throw new Error("No se encontró el pedido.");
+            return pedidoActualizado;
+        } catch (error) {
+            if (productosAnteriores === null) {
+                localStorage.removeItem("productos");
+            } else {
+                localStorage.setItem("productos", productosAnteriores);
+            }
+
+            if (pedidosAnteriores === null) {
+                localStorage.removeItem("sonido-vivo:pedidos");
+            } else {
+                localStorage.setItem("sonido-vivo:pedidos", pedidosAnteriores);
+            }
+
+            throw error;
+        }
     }
 
     const pedidoActualizado: Pedido = {
-        ...pedidos[indice],
+        ...pedidoAnterior,
         estado
     };
+        pedidos[indice] = pedidoActualizado;
+        guardarPedidos(pedidos);
 
-    pedidos[indice] = pedidoActualizado;
-    guardarPedidos(pedidos);
-
-    return pedidoActualizado;
-}
+        return pedidoActualizado;
+    }
 
 export function restablecerPedidosParaPruebas(): void {
     localStorage.removeItem(CLAVE);

@@ -58,12 +58,18 @@ export function crearProducto(datos: ProductoNuevo): Producto {
 }
 
 export function actualizarProducto(id: number, cambios: Partial<ProductoNuevo>): Producto[] {
-    const productos = listarProductos().map((producto) => (
-        producto.id === id ? { ...producto, ...cambios } : producto
-    ));
+    const productos = listarProductos()
+    const existe = productos.some((producto) => producto.id === id);
 
-    guardarProductos(productos);
-    return productos;
+    if (!existe) {
+        throw new Error("No se encontró el producto.");
+    }
+    const productosActualizados = productos.map((producto) => 
+        producto.id === id ? { ...producto, ...cambios } : producto
+    );
+
+    guardarProductos(productosActualizados);
+    return productosActualizados;
 }
 
 export function eliminarProducto(id: number): Producto[] {

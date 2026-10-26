@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import {
     actualizarProducto,
+    buscarProducto,
     crearProducto,
     eliminarProducto,
     listarProductos,
@@ -89,5 +90,32 @@ describe("repositorioProductos", () => {
         precio: 20000,
         stock: 8,
     });
+    });
+    
+    test("buscarProducto devuelve el producto correcto o undefined", () => {
+        const creado = crearProducto(productoPrueba);
+    
+        expect(buscarProducto(creado.id)).toMatchObject(productoPrueba);
+        expect(buscarProducto(999999)).toBeUndefined();
+    });
+    
+    test("actualizarProducto rechaza un ID inexistente", () => {
+        expect(() =>
+            actualizarProducto(999999, { nombre: "Producto editado" })
+        ).toThrow("No se encontró el producto.");
+    });
+    
+    test("eliminarProducto no elimina otros productos", () => {
+        const primero = crearProducto(productoPrueba);
+        const segundo = crearProducto({
+            ...productoPrueba,
+            codigo: "TEST002",
+            nombre: "Segundo producto",
+        });
+    
+        eliminarProducto(primero.id);
+    
+        expect(buscarProducto(primero.id)).toBeUndefined();
+        expect(buscarProducto(segundo.id)?.nombre).toBe("Segundo producto");
     });
 });

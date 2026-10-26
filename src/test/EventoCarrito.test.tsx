@@ -8,6 +8,17 @@ import { agregarAlCarrito } from "../datos/carrito";
 import { buscarProducto } from "../datos/repositorioProductos";
 import type { Producto } from "../datos/productos";
 
+const mockNavigate = vi.fn();
+
+vi.mock("react-router-dom", async (importOriginal) => {
+    const actual = await importOriginal<typeof import("react-router-dom")>();
+
+    return {
+        ...actual,
+        useNavigate: () => mockNavigate,
+    };
+});
+
 const producto: Producto = {
     id: 7,
     codigo: "GE002",
@@ -62,15 +73,15 @@ test("Prueba 7: agregar al carrito avisa al padre, agrupa el repetido y no super
     expect(screen.getByText("Total a pagar: $1.319.960").textContent).toBe("Total a pagar: $1.319.960");
     expect(screen.getByText("Stock: 4 unidades (máximo en el carrito)").textContent).toBe("Stock: 4 unidades (máximo en el carrito)");
 
-    // Comprar pide sesión: se abre una para pagar. El caso sin sesión está en CompraSinSesion.
     localStorage.setItem("sesion", JSON.stringify({
         id: 1, nombre: "Administrador", email: "admin@sonidovivo.cl", rol: "Cliente"
     }));
 
+    mockNavigate.mockClear();
     fireEvent.click(screen.getByText("Pagar"));
 
     expect(screen.getByText("El carrito está vacío.").textContent).toBe("El carrito está vacío.");
-    expect(screen.getByText("/despacho/1").textContent).toBeTruthy();
+    expect(mockNavigate).toHaveBeenCalledWith("/despacho/1");
     expect(buscarProducto(7)?.stock).toBe(0);
     expect(localStorage.getItem("carrito")).toBeNull();
 

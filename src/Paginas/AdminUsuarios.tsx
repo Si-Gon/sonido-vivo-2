@@ -5,6 +5,7 @@ import Boton from "../Componentes/atomos/Boton";
 import Aviso from "../Componentes/atomos/Aviso";
 import { validarRut, formatearRut } from "../utilidades/rut";
 import { listarUsuarios, crearUsuarioAdministrado, cambiarRolUsuario as guardarCambioRol, cambiarEstadoUsuario, type Usuario, type Rol } from "../datos/repositorioUsuarios";
+import { regionesChile } from "../datos/regiones";
 
 type Props = {
     incrustado?: boolean;
@@ -23,7 +24,10 @@ function AdminUsuarios({ incrustado }: Props) {
     const [rol, setRol] = useState<"Cliente" | "Administrador">("Cliente");
     const [error, setError] = useState("");
     const [aviso, setAviso] = useState("");
-
+    
+    const regionSeleccionada = regionesChile.find(
+        (item) => item.nombre === region
+    );
     const alCambiarRut = (valor: string) => {
         setRut(formatearRut(valor));
     };
@@ -32,7 +36,15 @@ function AdminUsuarios({ incrustado }: Props) {
         e.preventDefault();
         setError("");
 
-        if (!nombre.trim() || !rut.trim() || !email.trim() || !rol) {
+        if (
+            !nombre.trim() ||
+            !rut.trim() ||
+            !email.trim() ||
+            !rol ||
+            !region ||
+            !comuna ||
+            !password.trim()
+        ) {
             setError("Todos los campos son obligatorios.");
             return;
         }
@@ -42,15 +54,22 @@ function AdminUsuarios({ incrustado }: Props) {
             return;
         }
 
-        if (!email.includes("@") || !email.includes(".")) {
+        const correoNormalizado = email.trim().toLowerCase();
+
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correoNormalizado)) {
             setError("Ingrese un correo electrónico válido.");
+            return;
+        }
+
+        if (password.length < 8) {
+            setError("La contraseña debe tener al menos 8 caracteres.");
             return;
         }
 
         const resultado = crearUsuarioAdministrado({
             nombre,
             rut,
-            email,
+            email: correoNormalizado,
             region,
             comuna,
             password,
@@ -130,7 +149,46 @@ function AdminUsuarios({ incrustado }: Props) {
                             marcador="12.345.678-K"
                             alCambiar={alCambiarRut}
                         />
-
+                        
+                        <CampoSeleccion
+                            etiqueta="Región"
+                            nombre="region"
+                            valor={region}
+                            opciones={[
+                                { valor: "", etiqueta: "Selecciona una región" },
+                                ...regionesChile.map((item) => ({
+                                    valor: item.nombre,
+                                    etiqueta: item.nombre,
+                                })),
+                            ]}
+                            alCambiar={(valor) => {
+                                setRegion(valor);
+                                setComuna("");
+                            }}
+                        />
+                        
+                        <CampoSeleccion
+                            etiqueta="Comuna"
+                            nombre="comuna"
+                            valor={comuna}
+                            opciones={[
+                                { valor: "", etiqueta: "Selecciona una comuna" },
+                                ...(regionSeleccionada?.comunas ?? []).map((nombreComuna) => ({
+                                    valor: nombreComuna,
+                                    etiqueta: nombreComuna,
+                                })),
+                            ]}
+                            alCambiar={setComuna}
+                        />
+                        
+                        <CampoFormulario
+                            etiqueta="Contraseña"
+                            tipo="password"
+                            nombre="password"
+                            valor={password}
+                            marcador="Mínimo 8 caracteres"
+                            alCambiar={setPassword}
+                        />
                         <CampoFormulario
                             etiqueta="Correo electrónico"
                             tipo="email"

@@ -10,6 +10,7 @@ import {
 } from "../datos/repositorioPedidos";
 import {
     crearProducto,
+    listarProductos,
     type ProductoNuevo,
 } from "../datos/repositorioProductos";
 import { iniciarSesion } from "../datos/sesion";
@@ -201,5 +202,63 @@ describe("repositorioPedidos", () => {
                 callback,
             );
         }
+    });
+
+    test("descuenta el stock al crear un pedido", () => {
+        iniciarSesion(usuarioPrueba);
+        const producto = crearProducto(productoPrueba);
+
+        crearPedido([{ id: producto.id, cantidad: 2 }]);
+
+        const productoActualizado = listarProductos().find(
+            (p) => p.id === producto.id
+        );
+
+        expect(productoActualizado?.stock).toBe(3);
+    });
+    
+    test("rechaza una cantidad decimal sin crear un pedido", () => {
+        iniciarSesion(usuarioPrueba);
+        const producto = crearProducto(productoPrueba);
+
+        expect(() =>
+            crearPedido([{ id: producto.id, cantidad: 1.5 }])
+        ).toThrow("El carrito contiene cantidades inválidas.");
+
+        expect(listarPedidos()).toHaveLength(0);
+    });
+
+    test("rechaza actualizar el estado de un pedido inexistente", async () => {
+        const { actualizarEstadoPedido } = await import(
+            "../datos/repositorioPedidos"
+        );
+
+        expect(() =>
+            actualizarEstadoPedido(999, "Despachado")
+        ).toThrow("No se encontró el pedido.");
+    });
+
+    test("rechaza cantidades acumuladas superiores al stock del mismo producto", () => {
+        iniciarSesion(usuarioPrueba);
+        
+        const producto = crearProducto({
+            ...productoPrueba,
+            stock: 5,
+        });
+    
+        expect(() =>
+            crearPedido([
+                { id: producto.id, cantidad: 3 },
+                { id: producto.id, cantidad: 3 },
+            ])
+        ).toThrow(/Stock insuficiente/);
+    
+        expect(listarPedidos()).toHaveLength(0);
+    
+        const productoActual = listarProductos().find(
+            (p) => p.id === producto.id
+        );
+    
+        expect(productoActual?.stock).toBe(5);
     });
 });
