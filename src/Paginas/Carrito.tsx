@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Aviso from "../Componentes/atomos/Aviso";
 import Boton from "../Componentes/atomos/Boton";
 import ItemCarrito from "../Componentes/moleculas/ItemCarrito";
@@ -6,8 +7,10 @@ import { agregarAlCarrito, calcularTotal, contarUnidades, leerCarrito, mensajeDe
 import { buscarProducto, descontarStock } from "../datos/repositorioProductos";
 import type { Producto } from "../datos/productos";
 import { formatearPrecio } from "../utilidades/formato";
+import { leerSesion } from "../datos/sesion";
 
 function Carrito() {
+    const navigate = useNavigate();
     const [items, setItems] = useState<ItemGuardado[]>(() => leerCarrito());
     const [aviso, setAviso] = useState("");
 
@@ -28,6 +31,15 @@ function Carrito() {
     };
 
     const pagar = () => {
+        // Comprar pide sesión: el visitante puede armar el carrito, pero no pagar. Sin sesión se va
+        // al login y al entrar vuelve acá, con lo que tenía, porque el carrito no se toca.
+        if (!leerSesion()) {
+            navigate("/login", {
+                state: { desde: "/carrito", mensaje: "Para comprar tienes que iniciar sesión." }
+            });
+            return;
+        }
+
         const monto = formatearPrecio(calcularTotal(items));
         descontarStock(items);
         setAviso(`Pago realizado por ${monto}`);

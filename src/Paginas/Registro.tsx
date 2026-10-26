@@ -85,7 +85,7 @@ function Registro() {
             <div className="row justify-content-center">
                 <div className="col-12 col-md-8 col-lg-6">
                     <form className="sv-panel" onSubmit={handleSubmit}>
-                        <h2 className="text-center mb-4">Crear Cuenta</h2>
+                        <h1 className="text-center mb-4">Crear cuenta</h1>
 
                         {error && <p className="text-danger mb-3 text-center">{error}</p>}
 

@@ -62,6 +62,11 @@ test("Prueba 14: agregar al carrito avisa al padre, agrupa el repetido y no supe
     expect(screen.getByText("Total a pagar: $1.319.960").textContent).toBe("Total a pagar: $1.319.960");
     expect(screen.getByText("Stock: 4 unidades (máximo en el carrito)").textContent).toBe("Stock: 4 unidades (máximo en el carrito)");
 
+    // Comprar pide sesión: se abre una para pagar. El caso sin sesión está en CompraSinSesion.
+    localStorage.setItem("sesion", JSON.stringify({
+        id: 1, nombre: "Administrador", email: "admin@sonidovivo.cl", rol: "Cliente"
+    }));
+
     fireEvent.click(screen.getByText("Pagar"));
 
     expect(screen.getByText("El carrito está vacío.").textContent).toBe("El carrito está vacío.");

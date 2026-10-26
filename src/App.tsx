@@ -16,6 +16,7 @@ import Admin from './Paginas/Admin'
 import AdminProductos from './Paginas/AdminProductos'
 import AdminUsuarios from './Paginas/AdminUsuarios'
 import NoEncontrada from './Paginas/NoEncontrada'
+import RutaPrivada from './Componentes/organismos/RutaPrivada'
 
 function App() {
 
@@ -80,7 +81,10 @@ function App() {
 
       </Route>
 
-      <Route path='/admin' element={<LayoutAdmin/>}>
+      <Route
+      path='/admin'
+      element={<RutaPrivada rol="Administrador"><LayoutAdmin/></RutaPrivada>}
+      >
 
         <Route
         index

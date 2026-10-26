@@ -4,7 +4,7 @@ import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import App from "../App";
 
-const rutas: [string, string][] = [
+const publicas: [string, string][] = [
     ["/", "Bienvenidos a Sonido Vivo"],
     ["/nosotros", "Nosotros"],
     ["/catalogo", "Catálogo de productos"],
@@ -13,16 +13,22 @@ const rutas: [string, string][] = [
     ["/novedades", "Novedades"],
     ["/novedad/3", "Taller de luthería: mantenimiento de instrumentos de cuerda"],
     ["/contacto", "Contacto"],
-    ["/login", "Iniciar sesión"],
-    ["/registro", "Registro de usuario"],
-    ["/admin", "Panel de administración"],
-    ["/admin/productos", "Administración de productos"],
-    ["/admin/usuarios", "Administración de usuarios"],
+    ["/login", "Iniciar Sesión"],
+    ["/registro", "Crear cuenta"],
     ["/ruta-inexistente", "Página no encontrada"]
 ];
 
+// El panel pide sesión de administrador: se siembra para poder mirar sus tres pantallas.
+const panel: [string, string][] = [
+    ["/admin", "Panel de Administración"],
+    ["/admin/productos", "Gestión de Productos"],
+    ["/admin/usuarios", "Gestión de Usuarios"]
+];
+
 test("Prueba 15: cada ruta muestra su pagina y el detalle lee el parametro de la URL", () => {
-    rutas.forEach(([ruta, titulo]) => {
+    localStorage.clear();
+
+    publicas.forEach(([ruta, titulo]) => {
         const { unmount } = render(
             <MemoryRouter initialEntries={[ruta]}>
                 <App />
@@ -31,6 +37,22 @@ test("Prueba 15: cada ruta muestra su pagina y el detalle lee el parametro de la
         expect(screen.getByRole("heading", { level: 1 }).textContent).toBe(titulo);
         unmount();
     });
+
+    localStorage.setItem("sesion", JSON.stringify({
+        id: 1, nombre: "Administrador", email: "admin@sonidovivo.cl", rol: "Administrador"
+    }));
+
+    panel.forEach(([ruta, titulo]) => {
+        const { unmount } = render(
+            <MemoryRouter initialEntries={[ruta]}>
+                <App />
+            </MemoryRouter>
+        );
+        expect(screen.getByRole("heading", { level: 1 }).textContent).toBe(titulo);
+        unmount();
+    });
+
+    localStorage.clear();
 
     const { unmount } = render(
         <MemoryRouter initialEntries={["/producto/7"]}>
