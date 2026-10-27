@@ -9,8 +9,8 @@ Construido con React, Vite, TypeScript, React Router, Bootstrap y Atomic Design.
 
 ## Requisitos
 
-- Node.js 20 o superior (probado con 24.17.0)
-- npm
+* Node.js 20 o superior (probado con 24.17.0)
+* npm
 
 ## Cómo ejecutarlo
 
@@ -23,36 +23,40 @@ El sitio queda disponible en `http://localhost:5173`.
 
 ## Comandos
 
-| Comando | Qué hace |
-|---|---|
-| `npm run dev` | Levanta el sitio en modo desarrollo |
-| `npm run build` | Compila TypeScript y genera la versión de producción en `dist/` |
-| `npm run preview` | Sirve la versión de producción |
-| `npm run test` | Ejecuta las pruebas con Vitest y React Testing Library |
-| `npm run test:watch` | Ejecuta las pruebas en modo interactivo |
-| `npm run test:coverage` | Ejecuta las pruebas y genera el reporte en `coverage/` |
-| `npm run lint` | Revisa el código con ESLint |
+|Comando|Qué hace|
+|-|-|
+|`npm run dev`|Levanta el sitio en modo desarrollo|
+|`npm run build`|Compila TypeScript y genera la versión de producción en `dist/`|
+|`npm run preview`|Sirve la versión de producción|
+|`npm run test`|Ejecuta las pruebas con Vitest y React Testing Library|
+|`npm run test:watch`|Ejecuta las pruebas en modo interactivo|
+|`npm run test:coverage`|Ejecuta las pruebas y genera el reporte en `coverage/`|
+|`npm run lint`|Revisa el código con ESLint|
 
 ## Rutas
 
-| Ruta | Vista | Acceso |
-|---|---|---|
-| `/` | Inicio | Público |
-| `/nosotros` | Nosotros | Público |
-| `/catalogo` | Catálogo con filtros de categoría y búsqueda | Público |
-| `/producto/:id` | Detalle del producto | Público |
-| `/carrito` | Carrito y pago | Público |
-| `/despacho/:id` | Datos de despacho del pedido | Público |
-| `/novedades` | Novedades | Público |
-| `/novedad/:id` | Detalle de la novedad | Público |
-| `/contacto` | Contacto con formulario y mapa | Público |
-| `/login` | Inicio de sesión | Público |
-| `/registro` | Crear cuenta | Público |
-| `/admin` | Redirige a `/admin/pedidos` | Solo administrador |
-| `/admin/pedidos` | Gestión de pedidos y sus estados | Solo administrador |
-| `/admin/productos` | Gestión de productos: alta, edición y baja | Solo administrador |
-| `/admin/usuarios` | Gestión de usuarios: alta, rol y estado | Solo administrador |
-| `*` | Página no encontrada | Público |
+|Ruta|Vista|Acceso|
+|-|-|-|
+|`/`|Inicio|Público|
+|`/nosotros`|Nosotros|Público|
+|`/catalogo`|Catálogo con filtros de categoría y búsqueda|Público|
+|`/ofertas`|Ofertas: productos con descuento|Público|
+|`/producto/:id`|Detalle del producto|Público|
+|`/carrito`|Carrito y pago|Público|
+|`/despacho/:id`|Datos de despacho del pedido|Público|
+|`/compra-exitosa/:id`|Confirmación de la compra|Público|
+|`/pago-error`|Aviso de pago no realizado|Público|
+|`/novedades`|Novedades|Público|
+|`/novedad/:id`|Detalle de la novedad|Público|
+|`/contacto`|Contacto con formulario y mapa|Público|
+|`/login`|Inicio de sesión|Público|
+|`/registro`|Crear cuenta|Público|
+|`/admin`|Panel con el resumen de la tienda|Solo administrador|
+|`/admin/pedidos`|Gestión de pedidos y sus estados|Solo administrador|
+|`/admin/productos`|Gestión de productos: alta, edición y baja|Solo administrador|
+|`/admin/usuarios`|Gestión de usuarios: alta, rol, estado e historial de compras|Solo administrador|
+|`/admin/perfil`|Perfil del administrador|Solo administrador|
+|`*`|Página no encontrada|Público|
 
 Las rutas de administración pasan por `RutaPrivada`, que exige sesión iniciada con rol
 `Administrador`; sin sesión redirige al login, y con sesión de cliente redirige al catálogo.
@@ -78,13 +82,13 @@ src/
 No hay backend: la fuente de datos es un conjunto de módulos en `src/datos/` que se persiste en
 `localStorage`, de modo que los cambios del panel sobreviven a la recarga sin base de datos.
 
-| Clave en `localStorage` | Contenido | Módulo |
-|---|---|---|
-| `productos` | Catálogo (51 productos) y su stock | `repositorioProductos.ts` |
-| `usuarios` | Usuarios registrados, con rol y estado | `repositorioUsuarios.ts` |
-| `sonido-vivo:pedidos` | Pedidos con sus datos de despacho y estado | `repositorioPedidos.ts` |
-| `carrito` | Ítems del carrito | `carrito.ts` |
-| `sesion` | Sesión activa | `sesion.ts` |
+|Clave en `localStorage`|Contenido|Módulo|
+|-|-|-|
+|`productos`|Catálogo (51 productos) y su stock|`repositorioProductos.ts`|
+|`usuarios`|Usuarios registrados, con rol y estado|`repositorioUsuarios.ts`|
+|`sonido-vivo:pedidos`|Pedidos con sus datos de despacho y estado|`repositorioPedidos.ts`|
+|`carrito`|Ítems del carrito|`carrito.ts`|
+|`sesion`|Sesión activa|`sesion.ts`|
 
 Los repositorios exponen las operaciones que usa la interfaz: el de productos implementa el CRUD
 completo más el descuento de stock al confirmar una compra; el de usuarios registra, valida
@@ -131,6 +135,7 @@ párrafos en monitores grandes, y las secciones destacadas usan franjas a sangre
 
 ## Integrantes
 
-- Silvio Gonzalves (Si-Gon)
-- Oscar Garrido (oscargarrido29)
-- Maximiliano Quezada (Cachantun82)
+* Silvio Gonzalves (Si-Gon)
+* Oscar Garrido (oscargarrido29)
+* Maximiliano Quezada (Cachantun82)
+

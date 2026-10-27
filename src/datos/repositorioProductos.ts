@@ -11,7 +11,17 @@ function leerGuardados(): Producto[] {
 
     try {
         const datos: unknown = JSON.parse(guardado);
-        return Array.isArray(datos) ? (datos as Producto[]) : [];
+        if (!Array.isArray(datos)) return [];
+
+        // Un catálogo guardado antes de que existiera un campo no lo tiene: se completa con el
+        // catálogo base para que los datos nuevos (como el descuento) lleguen a las pantallas
+        // sin obligar a borrar el almacenamiento del navegador.
+        const basePorId = new Map(catalogoBase.map((producto) => [producto.id, producto]));
+
+        return (datos as Producto[]).map((producto) => {
+            const base = basePorId.get(producto.id);
+            return base ? { ...base, ...producto } : producto;
+        });
     } catch {
         return [];
     }

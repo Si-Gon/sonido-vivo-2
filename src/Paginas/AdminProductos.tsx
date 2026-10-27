@@ -11,6 +11,7 @@ function AdminProductos() {
     const [nombre, setNombre] = useState("");
     const [categoria, setCategoria] = useState("Guitarras");
     const [precio, setPrecio] = useState("");
+    const [descuento, setDescuento] = useState("");
     const [stock, setStock] = useState("");
     const [imagen, setImagen] = useState("");
     const [productoEditandoId, setProductoEditandoId] = useState<number | null>(null);
@@ -25,6 +26,7 @@ function AdminProductos() {
         setNombre("");
         setCategoria("Guitarras");
         setPrecio("");
+        setDescuento("");
         setStock("");
         setImagen("");
         setProductoEditandoId(null);
@@ -41,6 +43,7 @@ function AdminProductos() {
         setNombre(producto.nombre);
         setCategoria(producto.categoria);
         setPrecio(String(producto.precio));
+        setDescuento(String(producto.descuento ?? 0));
         setStock(String(producto.stock));
         setImagen(producto.imagen);
         setError("");
@@ -75,10 +78,18 @@ function AdminProductos() {
             return;
         }
 
+        const descuentoNum = descuento.trim() === "" ? 0 : Number(descuento);
+
+        if (!Number.isFinite(descuentoNum) || descuentoNum < 0 || descuentoNum > 90) {
+            setError("El descuento debe estar entre 0 y 90 por ciento.");
+            return;
+        }
+
         const datos: Partial<ProductoNuevo> = {
             nombre: nombre.trim(),
             categoria,
             precio: precioNum,
+            descuento: descuentoNum,
             stock: stockNum,
             imagen: imagen.trim() || "https://via.placeholder.com/150"
         };
@@ -109,6 +120,7 @@ function AdminProductos() {
                     marca: "Sin marca",
                     modelo: "Sin modelo",
                     precio: precioNum,
+                    descuento: descuentoNum,
                     stock: stockNum,
                     descripcion: "Sin descripción",
                     imagen: imagen.trim() || "https://via.placeholder.com/150"
@@ -175,6 +187,15 @@ function AdminProductos() {
                         />
 
                         <CampoFormulario
+                            etiqueta="Descuento en oferta (%) — 0 si no tiene"
+                            tipo="number"
+                            nombre="descuento"
+                            valor={descuento}
+                            marcador="0"
+                            alCambiar={setDescuento}
+                        />
+
+                        <CampoFormulario
                             etiqueta="Stock disponible"
                             tipo="number"
                             nombre="stock"
@@ -216,6 +237,7 @@ function AdminProductos() {
                                             <th>Producto</th>
                                             <th>Categoría</th>
                                             <th>Precio</th>
+                                            <th>Oferta</th>
                                             <th>Stock</th>
                                             <th>Acciones</th>
                                         </tr>
@@ -226,6 +248,11 @@ function AdminProductos() {
                                                 <td>{prod.nombre}</td>
                                                 <td>{prod.categoria}</td>
                                                 <td>${prod.precio.toLocaleString("es-CL")}</td>
+                                                <td>
+                                                    {prod.descuento && prod.descuento > 0
+                                                        ? <span className="sv-etiqueta-oferta">-{prod.descuento}%</span>
+                                                        : "—"}
+                                                </td>
                                                 <td>{prod.stock}</td>
                                                 <td>
                                                     <button
