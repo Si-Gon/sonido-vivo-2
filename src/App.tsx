@@ -1,4 +1,4 @@
-import { Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes } from 'react-router-dom'
 import './App.css'
 import LayoutPublico from './Componentes/organismos/LayoutPublico'
 import LayoutAdmin from './Componentes/organismos/LayoutAdmin'
@@ -12,9 +12,9 @@ import NovedadDetalle from './Paginas/NovedadDetalle'
 import Contacto from './Paginas/Contacto'
 import Login from './Paginas/Login'
 import Registro from './Paginas/Registro'
-import Admin from './Paginas/Admin'
 import AdminProductos from './Paginas/AdminProductos'
 import AdminUsuarios from './Paginas/AdminUsuarios'
+import AdminPedidos from './Paginas/AdminPedidos'
 import NoEncontrada from './Paginas/NoEncontrada'
 import RutaPrivada from './Componentes/organismos/RutaPrivada'
 import Despacho from './Paginas/Despacho'
@@ -94,7 +94,12 @@ function App() {
 
         <Route
         index
-        element={<Admin/>}
+        element={<Navigate to="pedidos" replace/>}
+        />
+
+        <Route
+        path='pedidos'
+        element={<AdminPedidos/>}
         />
 
         <Route

@@ -6,13 +6,7 @@ import Aviso from "../Componentes/atomos/Aviso";
 import { crearProducto, eliminarProducto, listarProductos, CambiosProductos, actualizarProducto, type ProductoNuevo } from "../datos/repositorioProductos";
 import type { Producto } from "../datos/productos";
 
-type Props = {
-    incrustado?: boolean;
-};
-
-function AdminProductos({ incrustado }: Props) {
-    const Titulo = incrustado ? "h2" : "h1";
-    const Subtitulo = incrustado ? "h3" : "h2";
+function AdminProductos() {
     const [productos, setProductos] = useState<Producto[]>(listarProductos());
     const [nombre, setNombre] = useState("");
     const [categoria, setCategoria] = useState("Guitarras");
@@ -139,12 +133,12 @@ function AdminProductos({ incrustado }: Props) {
 
     return (
         <section className="sv-seccion sv-seccion-ancha">
-            <Titulo>Gestión de Productos</Titulo>
+            <h1>Gestión de Productos</h1>
 
             <div className="row g-4">
                 <div className="col-12 col-lg-5">
                     <form className="sv-panel" onSubmit={handleCrearProducto}>
-                        <Subtitulo>{productoEditandoId !== null ? "Editar Producto" : "Agregar Producto"}</Subtitulo>
+                        <h2>{productoEditandoId !== null ? "Editar Producto" : "Agregar Producto"}</h2>
 
                         {error && <p className="text-danger mb-3">{error}</p>}
 
@@ -211,7 +205,7 @@ function AdminProductos({ incrustado }: Props) {
 
                 <div className="col-12 col-lg-7">
                     <div className="sv-panel">
-                        <Subtitulo>Inventario Actual</Subtitulo>
+                        <h2>Inventario Actual</h2>
                         {productos.length === 0 ? (
                             <p className="text-muted mt-3">No hay productos registrados en el inventario.</p>
                         ) : (

@@ -7,13 +7,7 @@ import { validarRut, formatearRut } from "../utilidades/rut";
 import { listarUsuarios, crearUsuarioAdministrado, cambiarRolUsuario as guardarCambioRol, cambiarEstadoUsuario, type Usuario, type Rol } from "../datos/repositorioUsuarios";
 import { regionesChile } from "../datos/regiones";
 
-type Props = {
-    incrustado?: boolean;
-};
-
-function AdminUsuarios({ incrustado }: Props) {
-    const Titulo = incrustado ? "h2" : "h1";
-    const Subtitulo = incrustado ? "h3" : "h2";
+function AdminUsuarios() {
     const [usuarios, setUsuarios] = useState<Usuario[]>(() => listarUsuarios());
     const [nombre, setNombre] = useState("");
     const [rut, setRut] = useState("");
@@ -123,12 +117,12 @@ function AdminUsuarios({ incrustado }: Props) {
 
     return (
         <section className="sv-seccion sv-seccion-ancha">
-            <Titulo>Gestión de Usuarios</Titulo>
+            <h1>Gestión de Usuarios</h1>
 
             <div className="row g-4">
                 <div className="col-12 col-lg-5">
                     <form className="sv-panel" onSubmit={handleCrearUsuario}>
-                        <Subtitulo>Registrar Nuevo Usuario</Subtitulo>
+                        <h2>Registrar Nuevo Usuario</h2>
 
                         {error && <p className="text-danger mb-3">{error}</p>}
 
@@ -217,7 +211,7 @@ function AdminUsuarios({ incrustado }: Props) {
 
                 <div className="col-12 col-lg-7">
                     <div className="sv-panel">
-                        <Subtitulo>Usuarios Registrados</Subtitulo>
+                        <h2>Usuarios Registrados</h2>
                         <div className="table-responsive mt-3">
                             <table className="table table-dark table-hover align-middle">
                                 <thead>

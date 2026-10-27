@@ -39,7 +39,7 @@ function NavbarAdmin() {
                             <Link className="nav-link" to="/">Volver al sitio</Link>
                         </li>
                         <li className="nav-item">
-                            <NavLink className={claseEnlace} to="/admin" end>Panel</NavLink>
+                            <NavLink className={claseEnlace} to="/admin/pedidos">Pedidos</NavLink>
                         </li>
                         <li className="nav-item">
                             <NavLink className={claseEnlace} to="/admin/productos">Productos</NavLink>

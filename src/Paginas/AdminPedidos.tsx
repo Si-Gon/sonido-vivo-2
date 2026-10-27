@@ -17,11 +17,7 @@ const estados: EstadoPedido[] = [
     "Cancelado"
 ];
 
-type AdminPedidosProps = {
-    incrustado?: boolean;
-};
-
-function AdminPedidos({ incrustado = false }: AdminPedidosProps) {
+function AdminPedidos() {
     const [pedidos, setPedidos] = useState<Pedido[]>(() => listarPedidos());
     const [error, setError] = useState("");
 
@@ -46,16 +42,16 @@ function AdminPedidos({ incrustado = false }: AdminPedidosProps) {
 
     if (pedidos.length === 0) {
         return (
-            <section className={incrustado ? "" : "sv-seccion sv-seccion-ancha"}>
-                <h2>Gestión de pedidos</h2>
+            <section className="sv-seccion sv-seccion-ancha">
+                <h1>Gestión de pedidos</h1>
                 <p className="sv-sin-resultados">Todavía no hay pedidos registrados.</p>
             </section>
         );
     }
 
     return (
-        <section className={incrustado ? "" : "sv-seccion sv-seccion-ancha"}>
-            <h2>Gestión de pedidos</h2>
+        <section className="sv-seccion sv-seccion-ancha">
+            <h1>Gestión de pedidos</h1>
 
             {error && <p className="text-danger" role="alert">{error}</p>}
 
