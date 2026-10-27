@@ -1,5 +1,6 @@
 import { actualizarProducto, descontarStock } from "./repositorioProductos";
 import { leerSesion } from "./sesion";
+import { precioVigente } from "../utilidades/formato";
 import { buscarProducto } from "./repositorioProductos";
 import type { ItemCarrito } from "./carrito";
 
@@ -170,9 +171,9 @@ export function crearPedido(itemsCarrito: ItemCarrito[]): Pedido {
         return {
             productoId: producto.id,
             nombre: producto.nombre,
-            precioUnitario: producto.precio,
+            precioUnitario: precioVigente(producto.precio, producto.descuento),
             cantidad: item.cantidad,
-            subtotal: producto.precio * item.cantidad
+            subtotal: precioVigente(producto.precio, producto.descuento) * item.cantidad
         };
     });
 

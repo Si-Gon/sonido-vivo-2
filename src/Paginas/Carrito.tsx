@@ -54,7 +54,7 @@ function Carrito() {
                 ? error.message
                 : "No se pudo completar la compra.";
 
-            setAviso(mensaje);
+            navigate("/pago-error", { state: { motivo: mensaje } });
         }
     };
 

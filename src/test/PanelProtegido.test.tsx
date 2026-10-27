@@ -25,7 +25,7 @@ test("Prueba 10: el panel pide sesion, y ademas rol de administrador", () => {
         id: 1, nombre: "Administrador", email: "admin@sonidovivo.cl", rol: "Administrador"
     }));
     render(<MemoryRouter initialEntries={["/admin"]}><App /></MemoryRouter>);
-    expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Gestión de pedidos");
+    expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Panel de administración");
 
     localStorage.clear();
 });

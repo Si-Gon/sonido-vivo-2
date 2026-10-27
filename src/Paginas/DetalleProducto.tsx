@@ -4,7 +4,7 @@ import Aviso from "../Componentes/atomos/Aviso";
 import Boton from "../Componentes/atomos/Boton";
 import { agregarAlCarrito, mensajeDeAgregado } from "../datos/carrito";
 import { buscarProducto } from "../datos/repositorioProductos";
-import { formatearPrecio } from "../utilidades/formato";
+import { formatearPrecio, precioVigente } from "../utilidades/formato";
 
 function DetalleProducto() {
     const { id } = useParams();
@@ -55,7 +55,15 @@ function DetalleProducto() {
                     </p>
 
                     <p className="sv-detalle-precio">
-                        {formatearPrecio(producto.precio)}
+                        { producto.descuento ? (
+                            <>
+                                {formatearPrecio(precioVigente(producto.precio, producto.descuento))}
+                                <span className="sv-precio-antes">{formatearPrecio(producto.precio)}</span>
+                                <span className="sv-etiqueta-oferta">-{producto.descuento}%</span>
+                            </>
+                        ) : (
+                            formatearPrecio(producto.precio)
+                        )}
                     </p>
 
                     <p>{producto.descripcion}</p>

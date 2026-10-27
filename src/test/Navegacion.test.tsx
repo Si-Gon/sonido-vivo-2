@@ -20,7 +20,7 @@ const publicas: [string, string][] = [
 
 // El panel pide sesión de administrador: se siembra para poder mirar sus tres pantallas.
 const panel: [string, string][] = [
-    ["/admin", "Gestión de pedidos"],
+    ["/admin", "Panel de administración"],
     ["/admin/pedidos", "Gestión de pedidos"],
     ["/admin/productos", "Gestión de Productos"],
     ["/admin/usuarios", "Gestión de Usuarios"]

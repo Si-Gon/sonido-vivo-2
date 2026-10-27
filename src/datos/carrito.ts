@@ -1,3 +1,4 @@
+import { precioVigente } from "../utilidades/formato";
 import { buscarProducto } from "./repositorioProductos";
 
 const CLAVE = "carrito";
@@ -122,7 +123,7 @@ export function vaciarCarrito() {
 export function calcularTotal(items: ItemCarrito[]): number {
     return items.reduce((total, item) => {
         const producto = buscarProducto(item.id);
-        return total + (producto ? producto.precio * item.cantidad : 0);
+        return total + (producto ? precioVigente(producto.precio, producto.descuento) * item.cantidad : 0);
     }, 0);
 }
 

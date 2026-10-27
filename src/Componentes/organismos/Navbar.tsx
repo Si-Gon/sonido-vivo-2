@@ -50,6 +50,9 @@ function Navbar() {
                             <NavLink className={claseEnlace} to="/catalogo">Catálogo</NavLink>
                         </li>
                         <li className="nav-item">
+                            <NavLink className={claseEnlace} to="/ofertas">Ofertas</NavLink>
+                        </li>
+                        <li className="nav-item">
                             <NavLink className={claseEnlace} to="/carrito">Carrito</NavLink>
                         </li>
                         <li className="nav-item">

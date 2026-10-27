@@ -877,3 +877,59 @@ label {
         padding-top: 2.2rem;
     }
 }
+
+/* ofertas y panel de administración */
+.sv-precio-oferta {
+    color: var(--laton);
+    font-weight: 600;
+    margin-right: .45rem;
+}
+
+.sv-precio-antes {
+    color: var(--texto-tenue);
+    text-decoration: line-through;
+    font-size: .85em;
+    margin-right: .45rem;
+}
+
+.sv-etiqueta-oferta {
+    background: var(--laton);
+    color: var(--tinta);
+    font-size: .7rem;
+    font-weight: 700;
+    letter-spacing: .02em;
+    padding: .08rem .38rem;
+    border-radius: 3px;
+    white-space: nowrap;
+}
+
+.sv-kpi {
+    background: var(--panel);
+    border: 1px solid var(--linea);
+    border-radius: var(--radius-md);
+    padding: 1rem 1.15rem;
+    height: 100%;
+}
+
+.sv-kpi-etiqueta {
+    font-size: .76rem;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    color: var(--texto-tenue);
+    margin: 0 0 .35rem;
+}
+
+.sv-kpi-valor {
+    font-family: var(--font-display);
+    font-size: 1.65rem;
+    font-weight: 600;
+    line-height: 1.1;
+    margin: 0;
+    color: var(--texto);
+}
+
+.sv-kpi-nota {
+    font-size: .82rem;
+    color: var(--texto-suave);
+    margin: .3rem 0 0;
+}

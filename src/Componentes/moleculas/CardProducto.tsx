@@ -1,5 +1,5 @@
 import Boton from "../atomos/Boton";
-import { formatearPrecio } from "../../utilidades/formato";
+import { formatearPrecio, precioVigente } from "../../utilidades/formato";
 import type { Producto } from "../../datos/productos";
 
 type Props = {
@@ -29,7 +29,17 @@ function CardProducto({ producto, alAgregar }: Props) {
                 </p>
 
                 <p className="card-text sv-card-precio">
-                    {formatearPrecio(producto.precio)}
+                    {producto.descuento ? (
+                        <>
+                            <span className="sv-precio-oferta">
+                                {formatearPrecio(precioVigente(producto.precio, producto.descuento))}
+                            </span>
+                            <span className="sv-precio-antes">{formatearPrecio(producto.precio)}</span>
+                            <span className="sv-etiqueta-oferta">-{producto.descuento}%</span>
+                        </>
+                    ) : (
+                        formatearPrecio(producto.precio)
+                    )}
                 </p>
 
                 {sinStock && (

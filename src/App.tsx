@@ -1,10 +1,11 @@
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { Route, Routes } from 'react-router-dom'
 import './App.css'
 import LayoutPublico from './Componentes/organismos/LayoutPublico'
 import LayoutAdmin from './Componentes/organismos/LayoutAdmin'
 import Inicio from './Paginas/Inicio'
 import Nosotros from './Paginas/Nosotros'
 import Catalogo from './Paginas/Catalogo'
+import Ofertas from './Paginas/Ofertas'
 import DetalleProducto from './Paginas/DetalleProducto'
 import Carrito from './Paginas/Carrito'
 import Novedades from './Paginas/Novedades'
@@ -18,6 +19,10 @@ import AdminPedidos from './Paginas/AdminPedidos'
 import NoEncontrada from './Paginas/NoEncontrada'
 import RutaPrivada from './Componentes/organismos/RutaPrivada'
 import Despacho from './Paginas/Despacho'
+import CompraExitosa from './Paginas/CompraExitosa'
+import PagoError from './Paginas/PagoError'
+import AdminDashboard from './Paginas/AdminDashboard'
+import PerfilAdmin from './Paginas/PerfilAdmin'
 
 function App() {
 
@@ -41,6 +46,11 @@ function App() {
         />
 
         <Route
+        path='/ofertas'
+        element={<Ofertas/>}
+        />
+
+        <Route
         path='/producto/:id'
         element={<DetalleProducto/>}
         />
@@ -53,6 +63,16 @@ function App() {
         <Route
         path="/despacho/:id"
         element={<Despacho />}
+        />
+
+        <Route
+        path="/compra-exitosa/:id"
+        element={<CompraExitosa />}
+        />
+
+        <Route
+        path="/pago-error"
+        element={<PagoError />}
         />
 
         <Route
@@ -94,7 +114,7 @@ function App() {
 
         <Route
         index
-        element={<Navigate to="pedidos" replace/>}
+        element={<AdminDashboard/>}
         />
 
         <Route
@@ -110,6 +130,11 @@ function App() {
         <Route
         path='usuarios'
         element={<AdminUsuarios/>}
+        />
+
+        <Route
+        path='perfil'
+        element={<PerfilAdmin/>}
         />
 
       </Route>

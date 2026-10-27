@@ -1,6 +1,6 @@
 import Boton from "../atomos/Boton";
 import type { Producto } from "../../datos/productos";
-import { formatearPrecio } from "../../utilidades/formato";
+import { formatearPrecio, precioVigente } from "../../utilidades/formato";
 
 type Props = {
     producto: Producto;
@@ -25,7 +25,7 @@ function ItemCarrito({ producto, cantidad, alAgregarUna, alQuitarUna, alQuitarPr
             <div className="sv-item-datos">
                 <h2 className="sv-item-titulo">{producto.nombre}</h2>
                 <p className="sv-card-marca">{producto.marca} · {producto.modelo}</p>
-                <p className="sv-card-precio">{formatearPrecio(producto.precio)}</p>
+                <p className="sv-card-precio">{formatearPrecio(precioVigente(producto.precio, producto.descuento))}</p>
                 <p className="sv-item-stock">
                     {producto.stock === 0
                         ? "Sin stock disponible"
@@ -55,7 +55,7 @@ function ItemCarrito({ producto, cantidad, alAgregarUna, alQuitarUna, alQuitarPr
             </div>
 
             <p className="sv-item-subtotal">
-                {formatearPrecio(producto.precio * cantidad)}
+                {formatearPrecio(precioVigente(producto.precio, producto.descuento) * cantidad)}
             </p>
 
             <Boton

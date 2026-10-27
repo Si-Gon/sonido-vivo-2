@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import CampoFormulario from "../Componentes/moleculas/CampoFormulario";
 import CampoSeleccion from "../Componentes/moleculas/CampoSeleccion";
 import Boton from "../Componentes/atomos/Boton";
@@ -6,6 +6,8 @@ import Aviso from "../Componentes/atomos/Aviso";
 import { validarRut, formatearRut } from "../utilidades/rut";
 import { listarUsuarios, crearUsuarioAdministrado, cambiarRolUsuario as guardarCambioRol, cambiarEstadoUsuario, type Usuario, type Rol } from "../datos/repositorioUsuarios";
 import { regionesChile } from "../datos/regiones";
+import { listarPedidosPorUsuario } from "../datos/repositorioPedidos";
+import { formatearFecha, formatearPrecio } from "../utilidades/formato";
 
 function AdminUsuarios() {
     const [usuarios, setUsuarios] = useState<Usuario[]>(() => listarUsuarios());
@@ -18,6 +20,7 @@ function AdminUsuarios() {
     const [rol, setRol] = useState<"Cliente" | "Administrador">("Cliente");
     const [error, setError] = useState("");
     const [aviso, setAviso] = useState("");
+    const [historialDe, setHistorialDe] = useState<number | null>(null);
     
     const regionSeleccionada = regionesChile.find(
         (item) => item.nombre === region
@@ -221,12 +224,14 @@ function AdminUsuarios() {
                                         <th>Correo</th>
                                         <th>Rol</th>
                                         <th>Estado</th>
+                                        <th>Compras</th>
                                         <th>Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {usuarios.map((usr) => (
-                                        <tr key={usr.id}>
+                                        <Fragment key={usr.id}>
+                                        <tr>
                                             <td>{usr.nombre}</td>
                                             <td>{usr.rut}</td>
                                             <td>{usr.email}</td>
@@ -256,6 +261,14 @@ function AdminUsuarios() {
                                             </td>
                                             <td>
                                                 <button
+                                                    className="btn btn-sm btn-outline-warning"
+                                                    onClick={() => setHistorialDe(historialDe === usr.id ? null : usr.id)}
+                                                >
+                                                    {historialDe === usr.id ? "Ocultar" : "Historial"}
+                                                </button>
+                                            </td>
+                                            <td>
+                                                <button
                                                     className={`btn btn-sm ${
                                                         usr.activo ? "btn-outline-danger" : "btn-outline-success"
                                                     }`}
@@ -265,6 +278,43 @@ function AdminUsuarios() {
                                                 </button>
                                             </td>
                                         </tr>
+
+                                        {historialDe === usr.id && (
+                                            <tr>
+                                                <td colSpan={7}>
+                                                    <p className="mb-2"><strong>Historial de compras de {usr.nombre}</strong></p>
+                                                    {listarPedidosPorUsuario(usr.id).length === 0 ? (
+                                                        <p className="sv-sin-resultados mb-0">
+                                                            Este usuario todavía no tiene compras registradas.
+                                                        </p>
+                                                    ) : (
+                                                        <div className="table-responsive">
+                                                            <table className="table table-sm table-dark align-middle mb-0">
+                                                                <thead>
+                                                                    <tr>
+                                                                        <th>Pedido</th>
+                                                                        <th>Fecha</th>
+                                                                        <th>Total</th>
+                                                                        <th>Estado</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    {listarPedidosPorUsuario(usr.id).map((pedido) => (
+                                                                        <tr key={pedido.id}>
+                                                                            <td>#{pedido.id}</td>
+                                                                            <td>{formatearFecha(pedido.fechaCreacion)}</td>
+                                                                            <td>{formatearPrecio(pedido.total)}</td>
+                                                                            <td>{pedido.estado}</td>
+                                                                        </tr>
+                                                                    ))}
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        )}
+                                        </Fragment>
                                     ))}
                                 </tbody>
                             </table>
