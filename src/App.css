@@ -933,3 +933,17 @@ label {
     color: var(--texto-suave);
     margin: .3rem 0 0;
 }
+
+/* Bandeja de mensajes: el texto largo se recorta en la tabla y se lee completo en el detalle */
+.sv-mensaje-corto {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-decoration: none;
+}
+
+.sv-mensaje-completo {
+    white-space: pre-wrap;
+    word-break: break-word;
+}

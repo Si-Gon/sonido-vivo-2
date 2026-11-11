@@ -51,6 +51,9 @@ function NavbarAdmin() {
                             <NavLink className={claseEnlace} to="/admin/usuarios">Usuarios</NavLink>
                         </li>
                         <li className="nav-item">
+                            <NavLink className={claseEnlace} to="/admin/mensajes">Mensajes</NavLink>
+                        </li>
+                        <li className="nav-item">
                             <NavLink className={claseEnlace} to="/admin/perfil">Perfil</NavLink>
                         </li>
                         {sesion && (

@@ -15,6 +15,8 @@ import Login from './Paginas/Login'
 import Registro from './Paginas/Registro'
 import AdminProductos from './Paginas/AdminProductos'
 import AdminUsuarios from './Paginas/AdminUsuarios'
+import AdminMensajes from "./Paginas/AdminMensajes";
+import AdminMensajeDetalle from "./Paginas/AdminMensajeDetalle";
 import AdminPedidos from './Paginas/AdminPedidos'
 import NoEncontrada from './Paginas/NoEncontrada'
 import RutaPrivada from './Componentes/organismos/RutaPrivada'
@@ -130,6 +132,16 @@ function App() {
         <Route
         path='usuarios'
         element={<AdminUsuarios/>}
+        />
+
+        <Route
+        path='mensajes'
+        element={<AdminMensajes/>}
+        />
+
+        <Route
+        path='mensajes/:id'
+        element={<AdminMensajeDetalle/>}
         />
 
         <Route
