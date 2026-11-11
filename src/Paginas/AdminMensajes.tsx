@@ -98,8 +98,8 @@ function AdminMensajes() {
                         alCambiar={(valor) => setFiltro(valor as Filtro)}
                     />
                 </div>
-                <div className="col-12 col-md-4">
-                    <Boton texto="Actualizar" variante="contorno" alHacerClick={() => cargar(filtro)} />
+                <div className="col-12 col-md-4 mb-3 d-flex align-items-end">
+                    <Boton texto="Actualizar" variante="contorno" tamano="normal" alHacerClick={() => cargar(filtro)} />
                 </div>
             </div>
 
