@@ -91,6 +91,18 @@ test("Prueba 7: agregar al carrito avisa al padre, agrupa el repetido y no super
     const fetchFalso = vi.fn(async (url: string, opciones?: { method?: string; body?: string }) => {
         const metodo = opciones?.method ?? "GET";
 
+        if (String(url).includes("/api/pedidos")) {
+            const cuerpo = JSON.parse(opciones?.body ?? "{}");
+            const total = cuerpo.items.reduce(
+                (suma: number, linea: { precioUnitario: number; cantidad: number }) =>
+                    suma + linea.precioUnitario * linea.cantidad, 0);
+
+            return new Response(JSON.stringify({ id: 1, total }), {
+                status: 201,
+                headers: { "Content-Type": "application/json" }
+            });
+        }
+
         if (metodo === "GET") {
             return new Response(JSON.stringify(delServicio), {
                 status: 200,

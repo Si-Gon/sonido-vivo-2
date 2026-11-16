@@ -113,7 +113,8 @@ function registrarPedidoConDescuento(pedido: Pedido): void {
 }
 
 
-export function crearPedido(itemsCarrito: ItemCarrito[]): Pedido {
+/** `idDeLaBoleta` permite usar el id que asignó el servicio de boletas. */
+export function crearPedido(itemsCarrito: ItemCarrito[], idDeLaBoleta?: number): Pedido {
     const sesion = leerSesion();
 
     if (!sesion) {
@@ -178,10 +179,13 @@ export function crearPedido(itemsCarrito: ItemCarrito[]): Pedido {
     });
 
     const pedidos = listarPedidos();
-    const siguienteId = pedidos.reduce(
+    const siguienteId = idDeLaBoleta ?? (pedidos.reduce(
         (mayor, pedido) => Math.max(mayor, pedido.id),
         0
-    ) + 1;
+    ) + 1);
+
+    // Si la boleta viene del servicio, se reemplaza cualquier copia local con el mismo id.
+    const sinDuplicado = pedidos.filter((pedido) => pedido.id !== siguienteId);
 
     const pedido: Pedido = {
         id: siguienteId,
@@ -195,7 +199,13 @@ export function crearPedido(itemsCarrito: ItemCarrito[]): Pedido {
         fechaCreacion: new Date().toISOString()
     };
 
-    registrarPedidoConDescuento(pedido);
+    if (idDeLaBoleta !== undefined) {
+        // La boleta ya existe en el servicio: se descuenta la copia local y se guarda con su id.
+        descontarStock(itemsCarrito.map((item) => ({ id: item.id, cantidad: item.cantidad })));
+        guardarPedidos([...sinDuplicado, pedido]);
+    } else {
+        registrarPedidoConDescuento(pedido);
+    }
 
     return pedido;
 }

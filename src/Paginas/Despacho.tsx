@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { regionesChile } from "../datos/regiones";
 import { leerSesion } from "../datos/sesion";
+import { registrarDespachoEnServicio } from "../datos/repositorioDespachos";
 import {
     buscarPedidoPorId,
     guardarDatosDespacho,
@@ -28,12 +29,18 @@ function Despacho() {
     const [comuna, setComuna] = useState(() => pedido?.despacho?.comuna ?? "");
     const [direccion, setDireccion] = useState(() => pedido?.despacho?.direccion ?? "");
     const [referencia, setReferencia] = useState(() => pedido?.despacho?.referencia ?? "");
+    // DOMICILIO pide dirección; RETIRO se retira en la tienda y no tiene costo de envío.
+    const [tipoEntrega, setTipoEntrega] = useState<"DOMICILIO" | "RETIRO">("DOMICILIO");
     const [error, setError] = useState("");
+
+    const COSTO_ENVIO = 4990;
+    const esDomicilio = tipoEntrega === "DOMICILIO";
+    const costoEnvio = esDomicilio ? COSTO_ENVIO : 0;
 
     const regionSeleccionada = regionesChile.find((r) => r.id === region);
     const comunas = regionSeleccionada?.comunas ?? [];
 
-    const guardar = (e: React.FormEvent<HTMLFormElement>) => {
+    const guardar = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setError("");
 
@@ -54,14 +61,13 @@ function Despacho() {
             return;
         }
 
-        if (
-            !nombre.trim() ||
-            !telefono.trim() ||
-            !region ||
-            !comuna ||
-            !direccion.trim()
-        ) {
-            setError("Completa todos los campos obligatorios.");
+        if (!nombre.trim() || !telefono.trim()) {
+            setError("El nombre y el teléfono son obligatorios.");
+            return;
+        }
+
+        if (esDomicilio && (!region || !comuna || !direccion.trim())) {
+            setError("Para entrega a domicilio completa región, comuna y dirección.");
             return;
         }
 
@@ -70,7 +76,7 @@ function Despacho() {
             return;
         }
 
-        if (!regionSeleccionada || !regionSeleccionada.comunas.includes(comuna)) {
+        if (esDomicilio && (!regionSeleccionada || !regionSeleccionada.comunas.includes(comuna))) {
             setError("Selecciona una región y comuna válidas.");
             return;
         }
@@ -78,13 +84,31 @@ function Despacho() {
         const datos: DatosDespacho = {
             nombre: nombre.trim(),
             telefono: telefono.trim(),
-            region: regionSeleccionada.nombre,
-            comuna,
-            direccion: direccion.trim(),
+            region: esDomicilio && regionSeleccionada ? regionSeleccionada.nombre : "",
+            comuna: esDomicilio ? comuna : "",
+            direccion: esDomicilio ? direccion.trim() : "",
             referencia: referencia.trim()
         };
 
         try {
+            // El despacho se registra en su servicio; la copia local queda para el resumen.
+            const enServicio = await registrarDespachoEnServicio({
+                pedidoId: pedido.id,
+                tipoEntrega,
+                nombre: datos.nombre,
+                telefono: datos.telefono,
+                region: datos.region,
+                comuna: datos.comuna,
+                direccion: datos.direccion,
+                referencia: datos.referencia,
+                costoEnvio
+            });
+
+            if (!enServicio.ok) {
+                setError(enServicio.motivo);
+                return;
+            }
+
             guardarDatosDespacho(pedido.id, datos);
             navigate(`/compra-exitosa/${pedido.id}`);
         } catch (err) {
@@ -124,6 +148,38 @@ function Despacho() {
             <p>Pedido #{pedido.id} · Total: ${pedido.total.toLocaleString("es-CL")}</p>
 
             <form onSubmit={guardar}>
+                <fieldset className="mb-3">
+                    <legend className="form-label fs-6">Tipo de entrega *</legend>
+
+                    <div className="form-check">
+                        <input
+                            className="form-check-input"
+                            type="radio"
+                            name="tipoEntrega"
+                            id="entrega-domicilio"
+                            checked={esDomicilio}
+                            onChange={() => setTipoEntrega("DOMICILIO")}
+                        />
+                        <label className="form-check-label" htmlFor="entrega-domicilio">
+                            Despacho a domicilio (+${COSTO_ENVIO.toLocaleString("es-CL")})
+                        </label>
+                    </div>
+
+                    <div className="form-check">
+                        <input
+                            className="form-check-input"
+                            type="radio"
+                            name="tipoEntrega"
+                            id="entrega-retiro"
+                            checked={!esDomicilio}
+                            onChange={() => setTipoEntrega("RETIRO")}
+                        />
+                        <label className="form-check-label" htmlFor="entrega-retiro">
+                            Retiro en tienda (sin costo)
+                        </label>
+                    </div>
+                </fieldset>
+
                 <div className="mb-3">
                     <label className="form-label" htmlFor="despacho-nombre">Nombre del destinatario *</label>
                     <input
@@ -147,62 +203,78 @@ function Despacho() {
                     />
                 </div>
 
-                <div className="mb-3">
-                    <label className="form-label" htmlFor="despacho-region">Región *</label>
-                    <select
-                        id="despacho-region"
-                        className="form-select"
-                        value={region}
-                        onChange={(e) => {
-                            setRegion(e.target.value);
-                            setComuna("");
-                        }}
-                        required
-                    >
-                        <option value="">Selecciona una región</option>
-                        {regionesChile.map((r) => (
-                            <option key={r.id} value={r.id}>{r.nombre}</option>
-                        ))}
-                    </select>
-                </div>
+                {esDomicilio ? (
+                    <>
+                        <div className="mb-3">
+                            <label className="form-label" htmlFor="despacho-region">Región *</label>
+                            <select
+                                id="despacho-region"
+                                className="form-select"
+                                value={region}
+                                onChange={(e) => {
+                                    setRegion(e.target.value);
+                                    setComuna("");
+                                }}
+                                required
+                            >
+                                <option value="">Selecciona una región</option>
+                                {regionesChile.map((r) => (
+                                    <option key={r.id} value={r.id}>{r.nombre}</option>
+                                ))}
+                            </select>
+                        </div>
 
-                <div className="mb-3">
-                    <label className="form-label" htmlFor="despacho-comuna">Comuna *</label>
-                    <select
-                        id="despacho-comuna"
-                        className="form-select"
-                        value={comuna}
-                        onChange={(e) => setComuna(e.target.value)}
-                        required
-                        disabled={!region}
-                    >
-                        <option value="">Selecciona una comuna</option>
-                        {comunas.map((c) => (
-                            <option key={c} value={c}>{c}</option>
-                        ))}
-                    </select>
-                </div>
+                        <div className="mb-3">
+                            <label className="form-label" htmlFor="despacho-comuna">Comuna *</label>
+                            <select
+                                id="despacho-comuna"
+                                className="form-select"
+                                value={comuna}
+                                onChange={(e) => setComuna(e.target.value)}
+                                required
+                                disabled={!region}
+                            >
+                                <option value="">Selecciona una comuna</option>
+                                {comunas.map((c) => (
+                                    <option key={c} value={c}>{c}</option>
+                                ))}
+                            </select>
+                        </div>
 
-                <div className="mb-3">
-                    <label className="form-label" htmlFor="despacho-direccion">Dirección *</label>
-                    <input
-                        id="despacho-direccion"
-                        className="form-control"
-                        value={direccion}
-                        onChange={(e) => setDireccion(e.target.value)}
-                        required
-                    />
-                </div>
+                        <div className="mb-3">
+                            <label className="form-label" htmlFor="despacho-direccion">Dirección *</label>
+                            <input
+                                id="despacho-direccion"
+                                className="form-control"
+                                value={direccion}
+                                onChange={(e) => setDireccion(e.target.value)}
+                                required
+                            />
+                        </div>
 
-                <div className="mb-3">
-                    <label className="form-label" htmlFor="despacho-referencia">Referencia (opcional)</label>
-                    <textarea
-                        id="despacho-referencia"
-                        className="form-control"
-                        value={referencia}
-                        onChange={(e) => setReferencia(e.target.value)}
-                        rows={3}
-                    />
+                        <div className="mb-3">
+                            <label className="form-label" htmlFor="despacho-referencia">Referencia (opcional)</label>
+                            <textarea
+                                id="despacho-referencia"
+                                className="form-control"
+                                value={referencia}
+                                onChange={(e) => setReferencia(e.target.value)}
+                                rows={3}
+                            />
+                        </div>
+                    </>
+                ) : (
+                    <div className="sv-aviso mb-3">
+                        <p className="mb-1"><strong>Retiras en la tienda</strong></p>
+                        <p className="mb-0">Av. Libertad 1348, Viña del Mar · de lunes a sábado, 10:00 a 19:00.</p>
+                        <p className="mb-0">Te avisaremos al teléfono cuando el pedido esté listo.</p>
+                    </div>
+                )}
+
+                <div className="sv-resumen-envio mb-3">
+                    <span>Productos: ${pedido.total.toLocaleString("es-CL")}</span>
+                    <span>Envío: {costoEnvio === 0 ? "Sin costo" : `$${costoEnvio.toLocaleString("es-CL")}`}</span>
+                    <strong>Total a pagar: ${(pedido.total + costoEnvio).toLocaleString("es-CL")}</strong>
                 </div>
 
                 {error && <p className="text-danger" role="alert">{error}</p>}

@@ -11,6 +11,7 @@ import { leerSesion } from "../datos/sesion";
 import {crearPedido} from "../datos/repositorioPedidos";
 import { descontarStockEnServicio } from "../datos/repositorioCatalogo";
 import { sincronizarCatalogo } from "../datos/repositorioProductos";
+import { emitirBoletaEnServicio } from "../datos/repositorioBoletas";
 
 function Carrito() {
     const navigate = useNavigate();
@@ -59,7 +60,16 @@ function Carrito() {
                 throw new Error(stock.motivo);
             }
 
-            const pedido = crearPedido(items);
+            // La boleta se emite en el servicio de boletas: el id que devuelve es el del pedido.
+            const boleta = await emitirBoletaEnServicio(
+                items.map((item) => ({ id: item.id, cantidad: item.cantidad }))
+            );
+
+            if (!boleta.ok) {
+                throw new Error(boleta.motivo);
+            }
+
+            const pedido = crearPedido(items, boleta.id);
             vaciar();
             navigate(`/despacho/${pedido.id}`);
         } catch (error) {

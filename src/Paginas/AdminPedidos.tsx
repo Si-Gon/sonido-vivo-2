@@ -1,122 +1,205 @@
-
-import { useEffect, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import {
-    actualizarEstadoPedido,
-    listarPedidos,
-    suscribirCambiosPedidos,
-    type EstadoPedido,
-    type Pedido
-} from "../datos/repositorioPedidos";
+    ESTADOS_BOLETA,
+    cambiarEstadoBoleta,
+    listarBoletas,
+    listarDespachos,
+    type Boleta,
+    type DespachoDelPedido,
+    type EstadoBoleta
+} from "../datos/repositorioBoletas";
 import { formatearPrecio } from "../utilidades/formato";
 
-const estados: EstadoPedido[] = [
-    "Pendiente de despacho",
-    "En preparación",
-    "Despachado",
-    "Entregado",
-    "Cancelado"
-];
-
 function AdminPedidos() {
-    const [pedidos, setPedidos] = useState<Pedido[]>(() => listarPedidos());
+    const [boletas, setBoletas] = useState<Boleta[]>([]);
+    const [despachos, setDespachos] = useState<DespachoDelPedido[]>([]);
+    const [filtro, setFiltro] = useState<EstadoBoleta | "">("");
+    const [cargando, setCargando] = useState(true);
     const [error, setError] = useState("");
+    const [detalle, setDetalle] = useState<number | null>(null);
 
-    useEffect(() => {
-        const actualizar = () => setPedidos(listarPedidos());
-        const cancelarSuscripcion = suscribirCambiosPedidos(actualizar);
+    const cargar = useCallback(async (estado: EstadoBoleta | "") => {
+        setCargando(true);
 
-        actualizar();
+        try {
+            const [listaBoletas, listaDespachos] = await Promise.all([
+                listarBoletas(estado === "" ? undefined : estado),
+                listarDespachos()
+            ]);
 
-        return cancelarSuscripcion;
+            setBoletas(listaBoletas);
+            setDespachos(listaDespachos);
+            setError("");
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "No se pudieron cargar los pedidos.");
+        } finally {
+            setCargando(false);
+        }
     }, []);
 
-    const cambiarEstado = (id: number, estado: EstadoPedido) => {
+    useEffect(() => {
+        void cargar(filtro);
+    }, [cargar, filtro]);
+
+    // Un despacho por pedido, para no recorrer la lista en cada fila.
+    const despachoPorPedido = useMemo(() => {
+        const mapa = new Map<number, DespachoDelPedido>();
+        despachos.forEach((despacho) => mapa.set(despacho.pedidoId, despacho));
+        return mapa;
+    }, [despachos]);
+
+    const cambiarEstado = async (id: number, estado: EstadoBoleta) => {
         try {
-            actualizarEstadoPedido(id, estado);
-            setPedidos(listarPedidos());
-            setError("");
+            await cambiarEstadoBoleta(id, estado);
+            await cargar(filtro);
         } catch (err) {
             setError(err instanceof Error ? err.message : "No se pudo actualizar el pedido.");
         }
     };
 
-    if (pedidos.length === 0) {
-        return (
-            <section className="sv-seccion sv-seccion-ancha">
-                <h1>Gestión de pedidos</h1>
-                <p className="sv-sin-resultados">Todavía no hay pedidos registrados.</p>
-            </section>
-        );
-    }
+    const total = boletas.reduce((suma, boleta) => suma + Number(boleta.total), 0);
 
     return (
         <section className="sv-seccion sv-seccion-ancha">
             <h1>Gestión de pedidos</h1>
+            <p>Los pedidos se leen del servicio de boletas; el despacho, del servicio de despachos.</p>
+
+            <div className="d-flex flex-wrap gap-3 align-items-end mb-3">
+                <div>
+                    <label className="form-label" htmlFor="filtro-estado">Estado</label>
+                    <select
+                        id="filtro-estado"
+                        className="form-select"
+                        value={filtro}
+                        onChange={(e) => setFiltro(e.target.value as EstadoBoleta | "")}
+                    >
+                        <option value="">Todos</option>
+                        {ESTADOS_BOLETA.map((estado) => (
+                            <option key={estado.valor} value={estado.valor}>{estado.etiqueta}</option>
+                        ))}
+                    </select>
+                </div>
+
+                <p className="mb-2">
+                    {boletas.length} pedido(s) · {formatearPrecio(total)} en total
+                </p>
+            </div>
 
             {error && <p className="text-danger" role="alert">{error}</p>}
 
-            <div className="table-responsive">
-                <table className="table table-striped align-middle">
-                    <thead>
-                        <tr>
-                            <th>Pedido</th>
-                            <th>Cliente</th>
-                            <th>Fecha</th>
-                            <th>Total</th>
-                            <th>Despacho</th>
-                            <th>Estado</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {pedidos
-                            .slice()
-                            .sort((a, b) => b.id - a.id)
-                            .map((pedido) => (
-                                <tr key={pedido.id}>
-                                    <td>#{pedido.id}</td>
-                                    <td>
-                                        {pedido.nombreCliente}
-                                        <br />
-                                        <small>{pedido.emailCliente}</small>
-                                    </td>
-                                    <td>{new Date(pedido.fechaCreacion).toLocaleDateString("es-CL")}</td>
-                                    <td>{formatearPrecio(pedido.total)}</td>
-                                    <td>
-                                        {pedido.despacho ? (
-                                            <>
-                                                <strong>{pedido.despacho.nombre}</strong>
+            {cargando ? (
+                <p>Cargando pedidos…</p>
+            ) : boletas.length === 0 ? (
+                <p className="sv-sin-resultados">
+                    {filtro === "" ? "Todavía no hay pedidos registrados." : "No hay pedidos con ese estado."}
+                </p>
+            ) : (
+                <div className="table-responsive">
+                    <table className="table table-striped align-middle">
+                        <thead>
+                            <tr>
+                                <th>Pedido</th>
+                                <th>Cliente</th>
+                                <th>Fecha</th>
+                                <th>Total</th>
+                                <th>Entrega</th>
+                                <th>Estado</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {boletas.map((boleta) => {
+                                const despacho = despachoPorPedido.get(boleta.id);
+                                const abierto = detalle === boleta.id;
+
+                                return (
+                                    <Fragment key={boleta.id}>
+                                        <tr>
+                                            <td>#{boleta.id}</td>
+                                            <td>
+                                                {boleta.nombreCliente}
                                                 <br />
-                                                {pedido.despacho.telefono}
-                                                <br />
-                                                {pedido.despacho.direccion}, {pedido.despacho.comuna}
-                                                <br />
-                                                {pedido.despacho.region}
-                                            </>
-                                        ) : (
-                                            <span className="text-warning">Faltan datos</span>
+                                                <small>{boleta.emailCliente}</small>
+                                            </td>
+                                            <td>{new Date(boleta.fechaCreacion).toLocaleDateString("es-CL")}</td>
+                                            <td>{formatearPrecio(Number(boleta.total))}</td>
+                                            <td>
+                                                {despacho ? (
+                                                    <>
+                                                        <strong>{despacho.tipoEntrega === "RETIRO" ? "Retiro en tienda" : "Domicilio"}</strong>
+                                                        <br />
+                                                        {despacho.tipoEntrega === "RETIRO" ? (
+                                                            <small>{despacho.nombre} · {despacho.telefono}</small>
+                                                        ) : (
+                                                            <small>
+                                                                {despacho.direccion}, {despacho.comuna}
+                                                                <br />
+                                                                {despacho.region} · {despacho.telefono}
+                                                            </small>
+                                                        )}
+                                                        <br />
+                                                        <small>Envío: {Number(despacho.costoEnvio) === 0 ? "sin costo" : formatearPrecio(Number(despacho.costoEnvio))}</small>
+                                                    </>
+                                                ) : (
+                                                    <span className="text-warning">Sin datos de entrega</span>
+                                                )}
+                                            </td>
+                                            <td>
+                                                <select
+                                                    className="form-select"
+                                                    value={boleta.estado}
+                                                    aria-label={`Estado del pedido ${boleta.id}`}
+                                                    onChange={(e) => void cambiarEstado(boleta.id, e.target.value as EstadoBoleta)}
+                                                >
+                                                    {ESTADOS_BOLETA.map((estado) => (
+                                                        <option key={estado.valor} value={estado.valor}>{estado.etiqueta}</option>
+                                                    ))}
+                                                </select>
+                                            </td>
+                                            <td>
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-sm btn-outline-dark"
+                                                    onClick={() => setDetalle(abierto ? null : boleta.id)}
+                                                >
+                                                    {abierto ? "Ocultar" : "Ver detalle"}
+                                                </button>
+                                            </td>
+                                        </tr>
+
+                                        {abierto && (
+                                            <tr>
+                                                <td colSpan={7}>
+                                                    <table className="table table-sm mb-0">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Producto</th>
+                                                                <th>Cantidad</th>
+                                                                <th>Precio</th>
+                                                                <th>Subtotal</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {boleta.items.map((linea) => (
+                                                                <tr key={linea.productoId}>
+                                                                    <td>{linea.nombreProducto}</td>
+                                                                    <td>{linea.cantidad}</td>
+                                                                    <td>{formatearPrecio(Number(linea.precioUnitario))}</td>
+                                                                    <td>{formatearPrecio(Number(linea.subtotal))}</td>
+                                                                </tr>
+                                                            ))}
+                                                        </tbody>
+                                                    </table>
+                                                </td>
+                                            </tr>
                                         )}
-                                    </td>
-                                    <td>
-                                        <select
-                                            className="form-select"
-                                            value={pedido.estado}
-                                            aria-label={`Estado del pedido ${pedido.id}`}
-                                            onChange={(e) =>
-                                                cambiarEstado(pedido.id, e.target.value as EstadoPedido)
-                                            }
-                                        >
-                                            {estados.map((estado) => (
-                                                <option key={estado} value={estado}>
-                                                    {estado}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </td>
-                                </tr>
-                            ))}
-                    </tbody>
-                </table>
-            </div>
+                                    </Fragment>
+                                );
+                            })}
+                        </tbody>
+                    </table>
+                </div>
+            )}
         </section>
     );
 }
