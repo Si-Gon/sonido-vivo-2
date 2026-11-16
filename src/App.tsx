@@ -1,5 +1,7 @@
+import { useEffect } from 'react'
 import { Route, Routes } from 'react-router-dom'
 import './App.css'
+import { sincronizarCatalogo } from './datos/repositorioProductos'
 import LayoutPublico from './Componentes/organismos/LayoutPublico'
 import LayoutAdmin from './Componentes/organismos/LayoutAdmin'
 import Inicio from './Paginas/Inicio'
@@ -27,6 +29,12 @@ import AdminDashboard from './Paginas/AdminDashboard'
 import PerfilAdmin from './Paginas/PerfilAdmin'
 
 function App() {
+
+  // Al abrir el sitio se trae el catalogo del servicio. Si no responde, las pantallas
+  // siguen mostrando la copia que ya estaba guardada en el navegador.
+  useEffect(() => {
+    sincronizarCatalogo();
+  }, []);
 
   return(
     <Routes>

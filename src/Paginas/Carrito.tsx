@@ -9,6 +9,8 @@ import type { Producto } from "../datos/productos";
 import { formatearPrecio } from "../utilidades/formato";
 import { leerSesion } from "../datos/sesion";
 import {crearPedido} from "../datos/repositorioPedidos";
+import { descontarStockEnServicio } from "../datos/repositorioCatalogo";
+import { sincronizarCatalogo } from "../datos/repositorioProductos";
 
 function Carrito() {
     const navigate = useNavigate();
@@ -31,7 +33,7 @@ function Carrito() {
         setItems([]);
     };
 
-    const pagar = () => {
+    const pagar = async () => {
         if (items.length === 0) {
             setAviso("El carrito está vacío.");
             return;
@@ -46,6 +48,17 @@ function Carrito() {
         }
 
         try {
+            // La copia local se refresca antes de validar, para que el stock sea el de la base.
+            await sincronizarCatalogo();
+
+            const stock = await descontarStockEnServicio(
+                items.map((item) => ({ id: item.id, cantidad: item.cantidad }))
+            );
+
+            if (!stock.ok) {
+                throw new Error(stock.motivo);
+            }
+
             const pedido = crearPedido(items);
             vaciar();
             navigate(`/despacho/${pedido.id}`);

@@ -1,4 +1,5 @@
 import { productos as catalogoBase, type Producto } from "./productos";
+import { API_GATEWAY } from "./apiServicios";
 
 const CLAVE = "productos";
 const PRODUCTOS_ACTUALIZADOS = "sonido-vivo:productos-actualizados";
@@ -140,4 +141,58 @@ export function descontarStock(items: { id: number; cantidad: number }[]): Produ
 export function restablecerCatalogo(): Producto[] {
     guardarProductos(catalogoBase);
     return catalogoBase;
+}
+
+export type ResultadoSincronizacion =
+    | { ok: true; productos: number }
+    | { ok: false; motivo: string };
+
+// Forma en que el servicio de catalogo devuelve un producto.
+type ProductoDelServicio = {
+    id: number;
+    codigo: string;
+    categoria: string;
+    nombre: string;
+    marca: string;
+    modelo: string;
+    precio: number;
+    descuento: number | null;
+    stock: number;
+    descripcion: string | null;
+    imagen: string | null;
+};
+
+/**
+ * Trae el catalogo del microservicio y lo deja como copia local, avisando a las pantallas.
+ * Si el servicio no responde, la pantalla sigue mostrando la copia que ya tenia.
+ */
+export async function sincronizarCatalogo(): Promise<ResultadoSincronizacion> {
+    try {
+        const respuesta = await fetch(`${API_GATEWAY}/api/productos`);
+
+        if (!respuesta.ok) {
+            return { ok: false, motivo: `El servicio de catalogo respondio ${respuesta.status}.` };
+        }
+
+        const delServicio = (await respuesta.json()) as ProductoDelServicio[];
+
+        const productos: Producto[] = delServicio.map((producto) => ({
+            id: producto.id,
+            codigo: producto.codigo,
+            categoria: producto.categoria,
+            nombre: producto.nombre,
+            marca: producto.marca,
+            modelo: producto.modelo,
+            precio: producto.precio,
+            ...(producto.descuento !== null ? { descuento: producto.descuento } : {}),
+            stock: producto.stock,
+            descripcion: producto.descripcion ?? "",
+            imagen: producto.imagen ?? ""
+        }));
+
+        guardarProductos(productos);
+        return { ok: true, productos: productos.length };
+    } catch {
+        return { ok: false, motivo: "No se pudo conectar con el servicio de catalogo." };
+    }
 }

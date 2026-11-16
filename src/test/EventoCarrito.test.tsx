@@ -1,6 +1,6 @@
 //@vitest-environment jsdom
 import { expect, test, vi } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import CardProducto from "../Componentes/moleculas/CardProducto";
 import Carrito from "../Paginas/Carrito";
@@ -32,7 +32,7 @@ const producto: Producto = {
     imagen: "ge002.jpg"
 };
 
-test("Prueba 7: agregar al carrito avisa al padre, agrupa el repetido y no supera el stock", () => {
+test("Prueba 7: agregar al carrito avisa al padre, agrupa el repetido y no supera el stock", async () => {
     const alAgregar = vi.fn();
     const tarjeta = render(<MemoryRouter><CardProducto producto={producto} alAgregar={alAgregar} /></MemoryRouter>);
 
@@ -78,12 +78,47 @@ test("Prueba 7: agregar al carrito avisa al padre, agrupa el repetido y no super
     }));
 
     mockNavigate.mockClear();
+
+    // La compra consulta el servicio de catalogo: se simulan la lista de productos y el
+    // descuento de stock para no depender de un servidor en la prueba.
+    const delServicio = [{
+        ...producto,
+        categoriaId: 2,
+        descuento: null,
+        activo: true
+    }];
+
+    const fetchFalso = vi.fn(async (url: string, opciones?: { method?: string; body?: string }) => {
+        const metodo = opciones?.method ?? "GET";
+
+        if (metodo === "GET") {
+            return new Response(JSON.stringify(delServicio), {
+                status: 200,
+                headers: { "Content-Type": "application/json" }
+            });
+        }
+
+        const stockPedido = JSON.parse(opciones?.body ?? "{}").stock ?? 0;
+        return new Response(JSON.stringify({ ...delServicio[0], stock: stockPedido }), {
+            status: 200,
+            headers: { "Content-Type": "application/json" }
+        });
+    });
+
+    vi.stubGlobal("fetch", fetchFalso);
+
     fireEvent.click(screen.getByText("Pagar"));
 
+    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith("/despacho/1"));
+
     expect(screen.getByText("El carrito está vacío.").textContent).toBe("El carrito está vacío.");
-    expect(mockNavigate).toHaveBeenCalledWith("/despacho/1");
     expect(buscarProducto(7)?.stock).toBe(0);
     expect(localStorage.getItem("carrito")).toBeNull();
 
+    // El descuento se envio al servicio: 4 unidades menos.
+    const escritura = fetchFalso.mock.calls.find(([, opciones]) => opciones?.method === "PATCH");
+    expect(escritura?.[1]?.body).toContain('"stock":0');
+
+    vi.unstubAllGlobals();
     localStorage.clear();
 });

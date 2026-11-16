@@ -3,144 +3,199 @@ import CampoFormulario from "../Componentes/moleculas/CampoFormulario";
 import CampoSeleccion from "../Componentes/moleculas/CampoSeleccion";
 import Boton from "../Componentes/atomos/Boton";
 import Aviso from "../Componentes/atomos/Aviso";
-import { crearProducto, eliminarProducto, listarProductos, CambiosProductos, actualizarProducto, type ProductoNuevo } from "../datos/repositorioProductos";
-import type { Producto } from "../datos/productos";
+import { sincronizarCatalogo } from "../datos/repositorioProductos";
+import {
+    actualizarProductoEnServicio,
+    crearProductoEnServicio,
+    desactivarProductoEnServicio,
+    listarCategoriasDelServicio,
+    listarProductosDelServicio,
+    type CategoriaAdmin,
+    type ProductoAdmin,
+    type ProductoParaGuardar
+} from "../datos/repositorioCatalogo";
+
+type Formulario = {
+    codigo: string;
+    nombre: string;
+    marca: string;
+    modelo: string;
+    categoriaId: string;
+    precio: string;
+    descuento: string;
+    stock: string;
+    descripcion: string;
+    imagen: string;
+};
+
+const FORMULARIO_VACIO: Formulario = {
+    codigo: "",
+    nombre: "",
+    marca: "",
+    modelo: "",
+    categoriaId: "",
+    precio: "",
+    descuento: "",
+    stock: "",
+    descripcion: "",
+    imagen: ""
+};
 
 function AdminProductos() {
-    const [productos, setProductos] = useState<Producto[]>(listarProductos());
-    const [nombre, setNombre] = useState("");
-    const [categoria, setCategoria] = useState("Guitarras");
-    const [precio, setPrecio] = useState("");
-    const [descuento, setDescuento] = useState("");
-    const [stock, setStock] = useState("");
-    const [imagen, setImagen] = useState("");
-    const [productoEditandoId, setProductoEditandoId] = useState<number | null>(null);
+    const [productos, setProductos] = useState<ProductoAdmin[]>([]);
+    const [categorias, setCategorias] = useState<CategoriaAdmin[]>([]);
+    const [formulario, setFormulario] = useState<Formulario>(FORMULARIO_VACIO);
+    const [editandoId, setEditandoId] = useState<number | null>(null);
+    const [cargando, setCargando] = useState(true);
+    const [guardando, setGuardando] = useState(false);
     const [error, setError] = useState("");
     const [aviso, setAviso] = useState("");
 
-    const recargarProductos = () => setProductos(listarProductos());
+    const campo = (nombre: keyof Formulario) => (valor: string) =>
+        setFormulario((actual) => ({ ...actual, [nombre]: valor }));
 
-    useEffect(() => CambiosProductos(() => setProductos(listarProductos())), []);
+    const cargar = async () => {
+        setCargando(true);
+        const [listaProductos, listaCategorias] = await Promise.all([
+            listarProductosDelServicio(),
+            listarCategoriasDelServicio()
+        ]);
+        setCargando(false);
+
+        if (!listaProductos.ok) {
+            setError(listaProductos.motivo);
+            return;
+        }
+
+        if (!listaCategorias.ok) {
+            setError(listaCategorias.motivo);
+            return;
+        }
+
+        setError("");
+        setProductos(listaProductos.datos);
+        setCategorias(listaCategorias.datos);
+
+        // La categoria inicial es la primera que exista en la base.
+        setFormulario((actual) =>
+            actual.categoriaId === "" && listaCategorias.datos.length > 0
+                ? { ...actual, categoriaId: String(listaCategorias.datos[0].id) }
+                : actual
+        );
+    };
+
+    useEffect(() => {
+        cargar();
+    }, []);
 
     const limpiarFormulario = () => {
-        setNombre("");
-        setCategoria("Guitarras");
-        setPrecio("");
-        setDescuento("");
-        setStock("");
-        setImagen("");
-        setProductoEditandoId(null);
+        setFormulario({ ...FORMULARIO_VACIO, categoriaId: categorias[0] ? String(categorias[0].id) : "" });
+        setEditandoId(null);
         setError("");
+    };
+
+    const iniciarEdicion = (producto: ProductoAdmin) => {
+        setEditandoId(producto.id);
+        setFormulario({
+            codigo: producto.codigo,
+            nombre: producto.nombre,
+            marca: producto.marca,
+            modelo: producto.modelo,
+            categoriaId: String(producto.categoriaId),
+            precio: String(producto.precio),
+            descuento: producto.descuento === null ? "" : String(producto.descuento),
+            stock: String(producto.stock),
+            descripcion: producto.descripcion ?? "",
+            imagen: producto.imagen ?? ""
+        });
+        setError("");
+        setAviso("");
+        window.scrollTo({ top: 0, behavior: "smooth" });
     };
 
     const cancelarEdicion = () => {
         limpiarFormulario();
         setAviso("Edición cancelada. No se guardaron los cambios.");
     };
-    
-    const iniciarEdicion = (producto: Producto) => {
-        setProductoEditandoId(producto.id);
-        setNombre(producto.nombre);
-        setCategoria(producto.categoria);
-        setPrecio(String(producto.precio));
-        setDescuento(String(producto.descuento ?? 0));
-        setStock(String(producto.stock));
-        setImagen(producto.imagen);
-        setError("");
-        setAviso("");
 
-        window.scrollTo({
-            top: 0,
-            behavior: "smooth"
-        });
-    };
-
-    const handleCrearProducto = (e: React.FormEvent) => {
+    const handleGuardar = async (e: React.FormEvent) => {
         e.preventDefault();
         setError("");
         setAviso("");
 
-        if (!nombre.trim() || !categoria.trim() || !precio.trim() || !stock.trim()) {
-            setError("Todos los campos marcados son obligatorios.");
+        if (!formulario.codigo.trim() || !formulario.nombre.trim() || !formulario.marca.trim()
+            || !formulario.modelo.trim() || !formulario.categoriaId || !formulario.precio.trim()
+            || !formulario.stock.trim()) {
+            setError("Código, nombre, marca, modelo, categoría, precio y stock son obligatorios.");
             return;
         }
 
-        const precioNum = Number(precio);
-        const stockNum = Number(stock);
+        const precio = Number(formulario.precio);
+        const stock = Number(formulario.stock);
+        const descuento = formulario.descuento.trim() === "" ? null : Number(formulario.descuento);
 
-        if (!Number.isFinite(precioNum) || precioNum <= 0) {
-            setError("El precio debe ser un número positivo.");
+        if (!Number.isFinite(precio) || precio < 0) {
+            setError("El precio debe ser un número mayor o igual a cero.");
             return;
         }
 
-        if (!Number.isFinite(stockNum) || stockNum < 0) {
-            setError("El stock no puede ser negativo.");
+        if (!Number.isInteger(stock) || stock < 0) {
+            setError("El stock debe ser un número entero mayor o igual a cero.");
             return;
         }
 
-        const descuentoNum = descuento.trim() === "" ? 0 : Number(descuento);
-
-        if (!Number.isFinite(descuentoNum) || descuentoNum < 0 || descuentoNum > 90) {
-            setError("El descuento debe estar entre 0 y 90 por ciento.");
+        if (descuento !== null && (!Number.isInteger(descuento) || descuento < 0 || descuento > 100)) {
+            setError("El descuento debe estar entre 0 y 100 por ciento.");
             return;
         }
 
-        const datos: Partial<ProductoNuevo> = {
-            nombre: nombre.trim(),
-            categoria,
-            precio: precioNum,
-            descuento: descuentoNum,
-            stock: stockNum,
-            imagen: imagen.trim() || "https://via.placeholder.com/150"
+        const datos: ProductoParaGuardar = {
+            codigo: formulario.codigo.trim().toUpperCase(),
+            categoriaId: Number(formulario.categoriaId),
+            nombre: formulario.nombre.trim(),
+            marca: formulario.marca.trim(),
+            modelo: formulario.modelo.trim(),
+            precio,
+            descuento,
+            stock,
+            descripcion: formulario.descripcion.trim(),
+            imagen: formulario.imagen.trim(),
+            activo: true
         };
 
-        try {
-            if (productoEditandoId !== null) {
-                const productoExiste = listarProductos().some(
-                    (producto) => producto.id === productoEditandoId
-                );
+        setGuardando(true);
+        const resultado = editandoId === null
+            ? await crearProductoEnServicio(datos)
+            : await actualizarProductoEnServicio(editandoId, datos);
+        setGuardando(false);
 
-                if (!productoExiste) {
-                    setError(
-                        "El producto ya no existe en el inventario. Actualiza la lista."
-                    );
-                    recargarProductos();
-                    limpiarFormulario();
-                    return;
-                }
-
-                actualizarProducto(productoEditandoId, datos);
-
-                setAviso("Producto actualizado correctamente.");
-            } else {
-                const nuevoProducto: ProductoNuevo = {
-                    codigo: `AD${Date.now().toString().slice(-6)}`,
-                    nombre: nombre.trim(),
-                    categoria,
-                    marca: "Sin marca",
-                    modelo: "Sin modelo",
-                    precio: precioNum,
-                    descuento: descuentoNum,
-                    stock: stockNum,
-                    descripcion: "Sin descripción",
-                    imagen: imagen.trim() || "https://via.placeholder.com/150"
-                };
-                crearProducto(nuevoProducto);
-                setAviso("Producto agregado exitosamente.");
-            }
-            recargarProductos();
-            limpiarFormulario();
-        } catch {
-            setError("Ocurrió un error al guardar el producto. Intenta nuevamente.");
-            recargarProductos();
+        if (!resultado.ok) {
+            setError(resultado.motivo);
+            return;
         }
 
+        setAviso(editandoId === null ? "Producto agregado al catálogo." : "Producto actualizado.");
+        limpiarFormulario();
+        await cargar();
+        sincronizarCatalogo();
     };
 
-    const EliminarProducto = (id: number) => {
-        eliminarProducto(id);
-        recargarProductos();
-        setAviso("Producto eliminado del inventario.");
+    const quitarProducto = async (producto: ProductoAdmin) => {
+        if (!window.confirm(`Quitar "${producto.nombre}" del catálogo?`)) {
+            return;
+        }
+
+        setError("");
+        const resultado = await desactivarProductoEnServicio(producto.id);
+
+        if (!resultado.ok) {
+            setError(resultado.motivo);
+            return;
+        }
+
+        setAviso(`"${producto.nombre}" quedó fuera del catálogo.`);
+        await cargar();
+        sincronizarCatalogo();
     };
 
     return (
@@ -149,73 +204,120 @@ function AdminProductos() {
 
             <div className="row g-4">
                 <div className="col-12 col-lg-5">
-                    <form className="sv-panel" onSubmit={handleCrearProducto}>
-                        <h2>{productoEditandoId !== null ? "Editar Producto" : "Agregar Producto"}</h2>
+                    <form className="sv-panel" onSubmit={handleGuardar}>
+                        <h2>{editandoId !== null ? "Editar Producto" : "Agregar Producto"}</h2>
 
-                        {error && <p className="text-danger mb-3">{error}</p>}
+                        {error && <p className="text-danger mb-3" role="alert">{error}</p>}
+
+                        <CampoFormulario
+                            etiqueta="Código"
+                            tipo="text"
+                            nombre="codigo"
+                            valor={formulario.codigo}
+                            marcador="Ej: GE006"
+                            maxLongitud={20}
+                            alCambiar={campo("codigo")}
+                        />
 
                         <CampoFormulario
                             etiqueta="Nombre del producto"
                             tipo="text"
                             nombre="nombre"
-                            valor={nombre}
+                            valor={formulario.nombre}
                             marcador="Ej: Guitarra Electroacústica"
-                            alCambiar={setNombre}
+                            maxLongitud={150}
+                            alCambiar={campo("nombre")}
+                        />
+
+                        <CampoFormulario
+                            etiqueta="Marca"
+                            tipo="text"
+                            nombre="marca"
+                            valor={formulario.marca}
+                            marcador="Ej: Yamaha"
+                            maxLongitud={60}
+                            alCambiar={campo("marca")}
+                        />
+
+                        <CampoFormulario
+                            etiqueta="Modelo"
+                            tipo="text"
+                            nombre="modelo"
+                            valor={formulario.modelo}
+                            marcador="Ej: F310"
+                            maxLongitud={60}
+                            alCambiar={campo("modelo")}
                         />
 
                         <CampoSeleccion
                             etiqueta="Categoría"
-                            nombre="categoria"
-                            valor={categoria}
-                            opciones={[
-                                { valor: "Guitarras", etiqueta: "Guitarras" },
-                                { valor: "Bajos", etiqueta: "Bajos" },
-                                { valor: "Teclados", etiqueta: "Teclados" },
-                                { valor: "Baterías", etiqueta: "Baterías" },
-                                { valor: "Accesorios", etiqueta: "Accesorios" }
-                            ]}
-                            alCambiar={setCategoria}
+                            nombre="categoriaId"
+                            valor={formulario.categoriaId}
+                            opciones={categorias.length === 0
+                                ? [{ valor: "", etiqueta: "Sin categorías en el servicio" }]
+                                : categorias.map((categoria) => ({ valor: String(categoria.id), etiqueta: categoria.nombre }))}
+                            alCambiar={campo("categoriaId")}
                         />
 
                         <CampoFormulario
                             etiqueta="Precio (CLP)"
                             tipo="number"
                             nombre="precio"
-                            valor={precio}
+                            valor={formulario.precio}
                             marcador="150000"
-                            alCambiar={setPrecio}
+                            alCambiar={campo("precio")}
                         />
 
                         <CampoFormulario
-                            etiqueta="Descuento en oferta (%) — 0 si no tiene"
+                            etiqueta="Descuento en oferta (%) — vacío si no tiene"
                             tipo="number"
                             nombre="descuento"
-                            valor={descuento}
+                            valor={formulario.descuento}
                             marcador="0"
-                            alCambiar={setDescuento}
+                            alCambiar={campo("descuento")}
                         />
 
                         <CampoFormulario
                             etiqueta="Stock disponible"
                             tipo="number"
                             nombre="stock"
-                            valor={stock}
+                            valor={formulario.stock}
                             marcador="10"
-                            alCambiar={setStock}
+                            alCambiar={campo("stock")}
                         />
 
+                        <div className="mb-3">
+                            <label className="form-label" htmlFor="descripcion">Descripción</label>
+                            <textarea
+                                className="form-control"
+                                id="descripcion"
+                                name="descripcion"
+                                rows={3}
+                                value={formulario.descripcion}
+                                onChange={(evento) => campo("descripcion")(evento.target.value)}
+                                maxLength={500}
+                                placeholder="Materiales, medidas, detalles del instrumento..."
+                            />
+                            <div className="form-text">{formulario.descripcion.trim().length} de 500 caracteres</div>
+                        </div>
+
                         <CampoFormulario
-                            etiqueta="URL de la Imagen (opcional)"
+                            etiqueta="Imagen (nombre del archivo o URL)"
                             tipo="text"
                             nombre="imagen"
-                            valor={imagen}
-                            marcador="https://ejemplo.com/imagen.jpg"
-                            alCambiar={setImagen}
+                            valor={formulario.imagen}
+                            marcador="Ej: ge006.jpg"
+                            maxLongitud={160}
+                            alCambiar={campo("imagen")}
                         />
 
                         <div className="mt-4 d-flex flex-wrap gap-2">
-                            <Boton texto={productoEditandoId !== null ? "Guardar Cambios" : "Guardar Producto"} tipo="submit" />
-                            {productoEditandoId !== null && (
+                            <Boton
+                                texto={guardando ? "Guardando..." : (editandoId !== null ? "Guardar Cambios" : "Guardar Producto")}
+                                tipo="submit"
+                                deshabilitado={guardando}
+                            />
+                            {editandoId !== null && (
                                 <button type="button" className="btn btn-outline-light" onClick={cancelarEdicion}>
                                     Cancelar
                                 </button>
@@ -227,13 +329,16 @@ function AdminProductos() {
                 <div className="col-12 col-lg-7">
                     <div className="sv-panel">
                         <h2>Inventario Actual</h2>
-                        {productos.length === 0 ? (
-                            <p className="text-muted mt-3">No hay productos registrados en el inventario.</p>
-                        ) : (
+                        <p className="text-muted">
+                            {cargando ? "Cargando del servicio..." : `${productos.length} productos publicados en el catálogo.`}
+                        </p>
+
+                        {productos.length > 0 && (
                             <div className="table-responsive mt-3">
                                 <table className="table table-dark table-hover align-middle">
                                     <thead>
                                         <tr>
+                                            <th>Código</th>
                                             <th>Producto</th>
                                             <th>Categoría</th>
                                             <th>Precio</th>
@@ -245,7 +350,11 @@ function AdminProductos() {
                                     <tbody>
                                         {productos.map((prod) => (
                                             <tr key={prod.id}>
-                                                <td>{prod.nombre}</td>
+                                                <td>{prod.codigo}</td>
+                                                <td>
+                                                    {prod.nombre}
+                                                    <div className="text-muted small">{prod.marca} · {prod.modelo}</div>
+                                                </td>
                                                 <td>{prod.categoria}</td>
                                                 <td>${prod.precio.toLocaleString("es-CL")}</td>
                                                 <td>
@@ -257,16 +366,15 @@ function AdminProductos() {
                                                 <td>
                                                     <button
                                                         type="button"
-                                                        className="btn btn-sm btn-outline-info"
+                                                        className="btn btn-sm btn-outline-info me-2"
                                                         onClick={() => iniciarEdicion(prod)}>
                                                         Editar
                                                     </button>
                                                     <button
                                                         type="button"
                                                         className="btn btn-sm btn-outline-danger"
-                                                        onClick={() => EliminarProducto(prod.id)}
-                                                    >
-                                                        Eliminar
+                                                        onClick={() => quitarProducto(prod)}>
+                                                        Quitar
                                                     </button>
                                                 </td>
                                             </tr>
