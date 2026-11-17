@@ -15,6 +15,7 @@ import NovedadDetalle from './Paginas/NovedadDetalle'
 import Contacto from './Paginas/Contacto'
 import Login from './Paginas/Login'
 import Registro from './Paginas/Registro'
+import AdminMovimientos from './Paginas/AdminMovimientos'
 import AdminProductos from './Paginas/AdminProductos'
 import AdminUsuarios from './Paginas/AdminUsuarios'
 import AdminMensajes from "./Paginas/AdminMensajes";
@@ -135,6 +136,11 @@ function App() {
         <Route
         path='productos'
         element={<AdminProductos/>}
+        />
+
+        <Route
+        path='movimientos'
+        element={<AdminMovimientos/>}
         />
 
         <Route

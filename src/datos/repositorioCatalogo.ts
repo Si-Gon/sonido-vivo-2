@@ -221,6 +221,8 @@ export async function descontarStockEnServicio(
 export type Movimiento = {
     id: number;
     productoId: number;
+    codigo: string | null;
+    producto: string | null;
     tipo: "ENTRADA" | "SALIDA";
     cantidad: number;
     motivo: string;
@@ -267,6 +269,34 @@ export async function registrarMovimiento(
     } catch {
         return { ok: false, motivo: "No se pudo conectar con el servicio de catálogo." };
     }
+}
+
+export type FiltrosMovimientos = {
+    productoId?: number;
+    tipo?: "ENTRADA" | "SALIDA" | "";
+    motivo?: string;
+    texto?: string;
+};
+
+/** Historial completo del kardex, con filtros. Sin filtros trae todos los movimientos. */
+export async function historialMovimientos(filtros: FiltrosMovimientos = {}): Promise<Movimiento[]> {
+    const parametros = new URLSearchParams();
+
+    if (filtros.productoId) parametros.set("productoId", String(filtros.productoId));
+    if (filtros.tipo) parametros.set("tipo", filtros.tipo);
+    if (filtros.motivo) parametros.set("motivo", filtros.motivo);
+    if (filtros.texto?.trim()) parametros.set("texto", filtros.texto.trim());
+
+    const consulta = parametros.toString();
+    const respuesta = await pedirConReintento(
+        `${API_GATEWAY}/api/movimientos${consulta ? `?${consulta}` : ""}`
+    );
+
+    if (!respuesta.ok) {
+        throw new Error(`El catálogo respondió ${respuesta.status}.`);
+    }
+
+    return (await respuesta.json()) as Movimiento[];
 }
 
 /** Historial de stock de un producto, del movimiento más nuevo al más viejo. */

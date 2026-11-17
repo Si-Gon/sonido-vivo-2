@@ -1,4 +1,5 @@
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
     ESTADOS_BOLETA,
     cambiarEstadoBoleta,
@@ -11,6 +12,7 @@ import {
 import { formatearPrecio } from "../utilidades/formato";
 
 function AdminPedidos() {
+    const [parametros] = useSearchParams();
     const [boletas, setBoletas] = useState<Boleta[]>([]);
     const [despachos, setDespachos] = useState<DespachoDelPedido[]>([]);
     const [filtro, setFiltro] = useState<EstadoBoleta | "">("");
@@ -57,7 +59,11 @@ function AdminPedidos() {
         }
     };
 
-    const total = boletas.reduce((suma, boleta) => suma + Number(boleta.total), 0);
+    // Si se llega desde el historial de stock, se muestra solo ese pedido.
+    const pedidoBuscado = parametros.get("pedido");
+    const visibles = pedidoBuscado
+        ? boletas.filter((boleta) => String(boleta.id) === pedidoBuscado)
+        : boletas;
 
     return (
         <section className="sv-seccion sv-seccion-ancha">
@@ -81,7 +87,7 @@ function AdminPedidos() {
                 </div>
 
                 <p className="mb-2">
-                    {boletas.length} pedido(s) · {formatearPrecio(total)} en total
+                    {visibles.length} pedido(s) · {formatearPrecio(visibles.reduce((suma, b) => suma + Number(b.total), 0))} en total
                 </p>
             </div>
 
@@ -89,9 +95,11 @@ function AdminPedidos() {
 
             {cargando ? (
                 <p>Cargando pedidos…</p>
-            ) : boletas.length === 0 ? (
+            ) : visibles.length === 0 ? (
                 <p className="sv-sin-resultados">
-                    {filtro === "" ? "Todavía no hay pedidos registrados." : "No hay pedidos con ese estado."}
+                    {pedidoBuscado
+                        ? `No se encontró el pedido #${pedidoBuscado}.`
+                        : filtro === "" ? "Todavía no hay pedidos registrados." : "No hay pedidos con ese estado."}
                 </p>
             ) : (
                 <div className="table-responsive">
@@ -108,7 +116,7 @@ function AdminPedidos() {
                             </tr>
                         </thead>
                         <tbody>
-                            {boletas.map((boleta) => {
+                            {visibles.map((boleta) => {
                                 const despacho = despachoPorPedido.get(boleta.id);
                                 const abierto = detalle === boleta.id;
 
