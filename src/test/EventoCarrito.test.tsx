@@ -110,9 +110,22 @@ test("Prueba 7: agregar al carrito avisa al padre, agrupa el repetido y no super
             });
         }
 
-        const stockPedido = JSON.parse(opciones?.body ?? "{}").stock ?? 0;
-        return new Response(JSON.stringify({ ...delServicio[0], stock: stockPedido }), {
-            status: 200,
+        // Movimiento de stock: el carrito manda SALIDA con la boleta como referencia.
+        const movimiento = JSON.parse(opciones?.body ?? "{}");
+        return new Response(JSON.stringify({
+            movimiento: {
+                id: 1,
+                productoId: 7,
+                tipo: movimiento.tipo,
+                cantidad: movimiento.cantidad,
+                motivo: movimiento.motivo,
+                referencia: movimiento.referencia,
+                stockResultante: 2,
+                creadoEn: "2026-11-16T10:00:00"
+            },
+            repetido: false
+        }), {
+            status: 201,
             headers: { "Content-Type": "application/json" }
         });
     });
@@ -127,9 +140,15 @@ test("Prueba 7: agregar al carrito avisa al padre, agrupa el repetido y no super
     expect(buscarProducto(7)?.stock).toBe(0);
     expect(localStorage.getItem("carrito")).toBeNull();
 
-    // El descuento se envio al servicio: 4 unidades menos.
-    const escritura = fetchFalso.mock.calls.find(([, opciones]) => opciones?.method === "PATCH");
-    expect(escritura?.[1]?.body).toContain('"stock":0');
+    // El descuento quedo como SALIDA en el kardex, con la boleta como referencia.
+    const salida = fetchFalso.mock.calls.find(([url, opciones]) =>
+        String(url).includes("/movimientos") && opciones?.method === "POST");
+
+    expect(salida?.[1]?.body).toContain('"tipo":"SALIDA"');
+    expect(salida?.[1]?.body).toContain('"motivo":"VENTA"');
+    expect(salida?.[1]?.body).toContain('"referencia":"PEDIDO-1"');
+    // El carrito llegó al máximo del stock: 4 unidades.
+    expect(salida?.[1]?.body).toContain('"cantidad":4');
 
     vi.unstubAllGlobals();
     localStorage.clear();

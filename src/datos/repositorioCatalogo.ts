@@ -1,4 +1,4 @@
-import { API_GATEWAY } from "./apiServicios";
+import { API_GATEWAY, pedirConReintento } from "./apiServicios";
 
 // Producto tal como lo entrega el servicio de catalogo: incluye el id de la categoria,
 // que el panel necesita para editar sin adivinar por nombre.
@@ -167,7 +167,10 @@ export type ItemParaDescontar = { id: number; cantidad: number };
  * Descuenta del stock del servicio lo que lleva el carrito. Se lee el stock actual antes de
  * escribir, para no pisar una venta hecha desde otra pestaña, y se valida que alcance.
  */
-export async function descontarStockEnServicio(items: ItemParaDescontar[]): Promise<Resultado<number>> {
+export async function descontarStockEnServicio(
+    items: ItemParaDescontar[],
+    referencia: string
+): Promise<Resultado<number>> {
     const lista = await listarProductosDelServicio();
 
     if (!lista.ok) {
@@ -201,14 +204,78 @@ export async function descontarStockEnServicio(items: ItemParaDescontar[]): Prom
         }
     }
 
+    // Una SALIDA por producto, con la boleta como referencia: queda en el kardex y no se repite.
     for (const [id, cantidad] of pedidoPorProducto) {
-        const producto = porId.get(id)!;
-        const resultado = await ajustarStockEnServicio(id, producto.stock - cantidad);
+        const movimiento = await registrarMovimiento(id, "SALIDA", cantidad, "VENTA", referencia);
 
-        if (!resultado.ok) {
-            return { ok: false, motivo: resultado.motivo };
+        if (!movimiento.ok) {
+            return { ok: false, motivo: movimiento.motivo };
         }
     }
 
     return { ok: true, datos: pedidoPorProducto.size };
+}
+
+// ---------------------------------------------------------------- kardex
+
+export type Movimiento = {
+    id: number;
+    productoId: number;
+    tipo: "ENTRADA" | "SALIDA";
+    cantidad: number;
+    motivo: string;
+    referencia: string | null;
+    stockResultante: number;
+    creadoEn: string;
+};
+
+/**
+ * Registra un movimiento de stock en el catalogo.
+ *
+ * La referencia es lo que hace el movimiento idempotente: dos llamadas con la misma referencia
+ * y motivo no descuentan dos veces. `omitido` llega cuando se pide devolver una venta que no existe.
+ */
+export async function registrarMovimiento(
+    productoId: number,
+    tipo: "ENTRADA" | "SALIDA",
+    cantidad: number,
+    motivo: string,
+    referencia: string
+): Promise<{ ok: true; movimiento: Movimiento | null; omitido: boolean } | { ok: false; motivo: string }> {
+    try {
+        const respuesta = await pedirConReintento(`${API_GATEWAY}/api/productos/${productoId}/movimientos`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ tipo, cantidad, motivo, referencia })
+        });
+
+        if (respuesta.ok) {
+            const cuerpo = (await respuesta.json()) as { movimiento?: Movimiento; omitido?: boolean };
+            return { ok: true, movimiento: cuerpo.movimiento ?? null, omitido: cuerpo.omitido === true };
+        }
+
+        let motivoError = `El catálogo respondió ${respuesta.status}.`;
+
+        try {
+            const cuerpo = (await respuesta.json()) as { motivo?: string };
+            motivoError = cuerpo.motivo ?? motivoError;
+        } catch {
+            /* sin cuerpo */
+        }
+
+        return { ok: false, motivo: motivoError };
+    } catch {
+        return { ok: false, motivo: "No se pudo conectar con el servicio de catálogo." };
+    }
+}
+
+/** Historial de stock de un producto, del movimiento más nuevo al más viejo. */
+export async function listarMovimientos(productoId: number): Promise<Movimiento[]> {
+    const respuesta = await pedirConReintento(`${API_GATEWAY}/api/productos/${productoId}/movimientos`);
+
+    if (!respuesta.ok) {
+        throw new Error(`El catálogo respondió ${respuesta.status}.`);
+    }
+
+    return (await respuesta.json()) as Movimiento[];
 }

@@ -11,7 +11,7 @@ import { leerSesion } from "../datos/sesion";
 import {crearPedido} from "../datos/repositorioPedidos";
 import { descontarStockEnServicio } from "../datos/repositorioCatalogo";
 import { sincronizarCatalogo } from "../datos/repositorioProductos";
-import { emitirBoletaEnServicio } from "../datos/repositorioBoletas";
+import { cambiarEstadoBoleta, emitirBoletaEnServicio } from "../datos/repositorioBoletas";
 
 function Carrito() {
     const navigate = useNavigate();
@@ -52,21 +52,26 @@ function Carrito() {
             // La copia local se refresca antes de validar, para que el stock sea el de la base.
             await sincronizarCatalogo();
 
-            const stock = await descontarStockEnServicio(
-                items.map((item) => ({ id: item.id, cantidad: item.cantidad }))
-            );
-
-            if (!stock.ok) {
-                throw new Error(stock.motivo);
-            }
-
-            // La boleta se emite en el servicio de boletas: el id que devuelve es el del pedido.
+            // 1. Se emite la boleta: el servicio calcula totales y le asigna el id.
             const boleta = await emitirBoletaEnServicio(
                 items.map((item) => ({ id: item.id, cantidad: item.cantidad }))
             );
 
             if (!boleta.ok) {
                 throw new Error(boleta.motivo);
+            }
+
+            // 2. El stock baja como SALIDA del kardex, con la boleta como referencia.
+            const stock = await descontarStockEnServicio(
+                items.map((item) => ({ id: item.id, cantidad: item.cantidad })),
+                `PEDIDO-${boleta.id}`
+            );
+
+            if (!stock.ok) {
+                // 3. Compensación: si el stock no alcanzó, se cancela la boleta y el catálogo
+                //    devuelve solo lo que esa misma referencia había vendido.
+                await cambiarEstadoBoleta(boleta.id, "CANCELADO").catch(() => undefined);
+                throw new Error(stock.motivo);
             }
 
             const pedido = crearPedido(items, boleta.id);
