@@ -5,7 +5,6 @@ import { MemoryRouter } from "react-router-dom";
 import CardProducto from "../Componentes/moleculas/CardProducto";
 import Carrito from "../Paginas/Carrito";
 import { agregarAlCarrito } from "../datos/carrito";
-import { buscarProducto } from "../datos/repositorioProductos";
 import type { Producto } from "../datos/productos";
 
 const mockNavigate = vi.fn();
@@ -137,7 +136,7 @@ test("Prueba 7: agregar al carrito avisa al padre, agrupa el repetido y no super
     await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith("/despacho/1"));
 
     expect(screen.getByText("El carrito está vacío.").textContent).toBe("El carrito está vacío.");
-    expect(buscarProducto(7)?.stock).toBe(0);
+    // El stock vive en la base del catálogo: acá solo se comprueba que el carrito quedó vacío.
     expect(localStorage.getItem("carrito")).toBeNull();
 
     // El descuento quedo como SALIDA en el kardex, con la boleta como referencia.

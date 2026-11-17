@@ -1,17 +1,81 @@
+import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import Boton from "../Componentes/atomos/Boton";
-import { buscarPedidoPorId } from "../datos/repositorioPedidos";
+import {
+    ESTADOS_BOLETA,
+    obtenerBoleta,
+    obtenerDespachoDePedido,
+    type Boleta,
+    type DespachoDelPedido
+} from "../datos/repositorioBoletas";
 import { formatearFecha, formatearPrecio } from "../utilidades/formato";
 
 function CompraExitosa() {
     const { id } = useParams();
     const numeroPedido = Number(id);
-    const pedido = Number.isInteger(numeroPedido) && numeroPedido > 0
-        ? buscarPedidoPorId(numeroPedido)
-        : null;
 
-    if (!pedido) {
-        return(
+    const [boleta, setBoleta] = useState<Boleta | null>(null);
+    const [despacho, setDespacho] = useState<DespachoDelPedido | undefined>(undefined);
+    const [cargando, setCargando] = useState(true);
+    const [error, setError] = useState("");
+
+    useEffect(() => {
+        if (!Number.isInteger(numeroPedido) || numeroPedido <= 0) {
+            setCargando(false);
+            return;
+        }
+
+        let vigente = true;
+
+        const cargar = async () => {
+            try {
+                // La boleta y su despacho se leen de sus servicios: nada queda en el navegador.
+                const [encontrada, datosDespacho] = await Promise.all([
+                    obtenerBoleta(numeroPedido),
+                    obtenerDespachoDePedido(numeroPedido)
+                ]);
+
+                if (!vigente) return;
+
+                setBoleta(encontrada ?? null);
+                setDespacho(datosDespacho);
+            } catch (err) {
+                if (vigente) setError(err instanceof Error ? err.message : "No se pudo cargar el pedido.");
+            } finally {
+                if (vigente) setCargando(false);
+            }
+        };
+
+        void cargar();
+
+        return () => {
+            vigente = false;
+        };
+    }, [numeroPedido]);
+
+    if (cargando) {
+        return (
+            <section className="sv-seccion">
+                <h1>Compra realizada</h1>
+                <p>Cargando el comprobante…</p>
+            </section>
+        );
+    }
+
+    if (error) {
+        return (
+            <section className="sv-seccion">
+                <h1>Pedido no encontrado</h1>
+                <p className="text-danger" role="alert">{error}</p>
+                <div className="text-center">
+                    <Boton texto="Ir al catálogo" to="/catalogo" variante="contorno" />
+                </div>
+            </section>
+        );
+    }
+
+    if (!boleta) {
+        return (
             <section className="sv-seccion">
                 <h1>Pedido no encontrado</h1>
                 <p className="sv-pendiente">
@@ -22,16 +86,18 @@ function CompraExitosa() {
                     <Boton texto="Ir al catálogo" to="/catalogo" variante="contorno" />
                 </div>
             </section>
-        )
+        );
     }
 
-    return(
+    const estado = ESTADOS_BOLETA.find((e) => e.valor === boleta.estado)?.etiqueta ?? boleta.estado;
+
+    return (
         <section className="sv-seccion sv-seccion-ancha">
             <h1>Compra realizada</h1>
 
             <p className="sv-lead">
-                Tu pedido quedó registrado con el número <strong>#{pedido.id}</strong> y está
-                en estado <strong>{pedido.estado}</strong>. Te contactaremos al teléfono que
+                Tu pedido quedó registrado con el número <strong>#{boleta.id}</strong> y está
+                en estado <strong>{estado}</strong>. Te contactaremos al teléfono que
                 dejaste en el despacho para coordinar la entrega.
             </p>
 
@@ -50,12 +116,12 @@ function CompraExitosa() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {pedido.items.map((item) => (
+                                    {boleta.items.map((item) => (
                                         <tr key={item.productoId}>
-                                            <td>{item.nombre}</td>
+                                            <td>{item.nombreProducto}</td>
                                             <td>{item.cantidad}</td>
-                                            <td>{formatearPrecio(item.precioUnitario)}</td>
-                                            <td>{formatearPrecio(item.subtotal)}</td>
+                                            <td>{formatearPrecio(Number(item.precioUnitario))}</td>
+                                            <td>{formatearPrecio(Number(item.subtotal))}</td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -63,28 +129,38 @@ function CompraExitosa() {
                         </div>
 
                         <p className="sv-total mt-3 mb-0">
-                            Total pagado: {formatearPrecio(pedido.total)}
+                            Total pagado: {formatearPrecio(Number(boleta.total))}
                         </p>
                     </div>
                 </div>
 
                 <div className="col-12 col-lg-5">
                     <div className="sv-panel">
-                        <h2>Despacho</h2>
-                        {pedido.despacho ? (
+                        <h2>Entrega</h2>
+                        {despacho ? (
                             <ul className="sv-detalle-datos mt-3">
-                                <li>Destinatario: {pedido.despacho.nombre}</li>
-                                <li>Teléfono: {pedido.despacho.telefono}</li>
-                                <li>Dirección: {pedido.despacho.direccion}</li>
-                                <li>{pedido.despacho.comuna}, {pedido.despacho.region}</li>
-                                {pedido.despacho.referencia !== "" && (
-                                    <li>Referencia: {pedido.despacho.referencia}</li>
+                                <li>
+                                    Tipo: {despacho.tipoEntrega === "RETIRO" ? "Retiro en tienda" : "Despacho a domicilio"}
+                                </li>
+                                <li>Destinatario: {despacho.nombre}</li>
+                                <li>Teléfono: {despacho.telefono}</li>
+                                {despacho.tipoEntrega === "DOMICILIO" && (
+                                    <>
+                                        <li>Dirección: {despacho.direccion}</li>
+                                        <li>{despacho.comuna}, {despacho.region}</li>
+                                    </>
                                 )}
-                                <li>Fecha: {formatearFecha(pedido.fechaCreacion)}</li>
+                                {despacho.referencia && <li>Referencia: {despacho.referencia}</li>}
+                                <li>
+                                    Envío: {Number(despacho.costoEnvio) === 0
+                                        ? "sin costo"
+                                        : formatearPrecio(Number(despacho.costoEnvio))}
+                                </li>
+                                <li>Fecha: {formatearFecha(boleta.fechaCreacion)}</li>
                             </ul>
                         ) : (
                             <p className="sv-pendiente">
-                                El pedido todavía no tiene datos de despacho.
+                                El pedido todavía no tiene datos de entrega.
                             </p>
                         )}
                     </div>
@@ -96,7 +172,7 @@ function CompraExitosa() {
                 <Boton texto="Volver al inicio" to="/" variante="contorno" />
             </div>
         </section>
-    )
+    );
 }
 
-export default CompraExitosa
+export default CompraExitosa;

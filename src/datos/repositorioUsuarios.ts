@@ -1,7 +1,6 @@
-const clave = "usuarios";
+import { API_GATEWAY, pedirConReintento } from "./apiServicios";
 
-export type Rol = "Cliente" | "Administrador";
-
+// El servicio nunca devuelve la contraseña: solo viaja al registrar y al iniciar sesión.
 export type Usuario = {
     id: number;
     nombre: string;
@@ -9,197 +8,142 @@ export type Usuario = {
     email: string;
     region: string;
     comuna: string;
-    password: string;
     rol: Rol;
     activo: boolean;
 };
 
-export type UsuarioNuevo = Omit<Usuario, "id" | "rol" | "activo">;
+export type Rol = "Cliente" | "Administrador";
+
+/** Datos del registro público (queda como Cliente). */
+export type UsuarioNuevo = {
+    nombre: string;
+    rut: string;
+    email: string;
+    region: string;
+    comuna: string;
+    password: string;
+};
+
+/** Alta desde el panel: además elige rol y estado. */
+export type UsuarioAdministrado = UsuarioNuevo & { rol: Rol; activo: boolean };
 
 export type ResultadoRegistro =
     | { ok: true; usuario: Usuario }
     | { ok: false; motivo: string };
 
-export type ResultadoOperacion =
+export type ResultadoOperacion = ResultadoRegistro;
+
+export type ResultadoLogin =
     | { ok: true; usuario: Usuario }
     | { ok: false; motivo: string };
 
-const administrador: Usuario = {
-    id: 1,
-    nombre: "Administrador",
-    rut: "12.345.678-5",
-    email: "admin@sonidovivo.cl",
-    region: "",
-    comuna: "",
-    password: "admin123",
-    rol: "Administrador",
-    activo: true
-};
-
-const normalizarEmail = (email: string) => email.trim().toLowerCase();
-const limpiarRut = (rut: string) => rut.replace(/[^0-9kK]/g, "").toUpperCase();
-
-function leerGuardados(): Usuario[] {
-    const guardado = localStorage.getItem(clave);
-    if (!guardado) return [];
-
+/** Mensaje que mandó el servicio, o uno por defecto si no vino cuerpo. */
+async function motivoDeError(respuesta: Response, porDefecto: string): Promise<string> {
     try {
-        const datos = JSON.parse(guardado);
-        return Array.isArray(datos) ? (datos as Usuario[]) : [];
+        const cuerpo = (await respuesta.json()) as { motivo?: string };
+        return cuerpo.motivo ?? porDefecto;
     } catch {
-        return [];
+        return porDefecto;
     }
 }
 
-function guardarUsuarios(usuarios: Usuario[]) {
-    localStorage.setItem(clave, JSON.stringify(usuarios));
+export async function listarUsuarios(): Promise<Usuario[]> {
+    const respuesta = await pedirConReintento(`${API_GATEWAY}/api/usuarios`);
+
+    if (!respuesta.ok) {
+        throw new Error(`El servicio de usuarios respondió ${respuesta.status}.`);
+    }
+
+    return (await respuesta.json()) as Usuario[];
 }
 
-export function listarUsuarios(): Usuario[] {
-    if (localStorage.getItem(clave) === null) {
-        guardarUsuarios([administrador]);
-    }
-    return leerGuardados();
+export async function obtenerUsuario(id: number): Promise<Usuario | undefined> {
+    const respuesta = await pedirConReintento(`${API_GATEWAY}/api/usuarios/${id}`);
+
+    if (!respuesta.ok) return undefined;
+
+    return (await respuesta.json()) as Usuario;
 }
 
-export function registrarUsuario(datos: UsuarioNuevo): ResultadoRegistro {
-    const usuarios = listarUsuarios();
-    const email = normalizarEmail(datos.email);
+/** Registro del sitio: el servicio lo deja como Cliente. */
+export async function registrarUsuario(datos: UsuarioNuevo): Promise<ResultadoRegistro> {
+    try {
+        const respuesta = await pedirConReintento(`${API_GATEWAY}/api/usuarios`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(datos)
+        });
 
-    if (usuarios.some((u) => u.email === email)) {
-        return { ok: false, motivo: "Ya existe una cuenta con ese correo." };
+        if (respuesta.status === 201) {
+            return { ok: true, usuario: (await respuesta.json()) as Usuario };
+        }
+
+        return { ok: false, motivo: await motivoDeError(respuesta, "No se pudo registrar la cuenta.") };
+    } catch {
+        return { ok: false, motivo: "No se pudo conectar con el servicio de usuarios." };
     }
-    if (usuarios.some((u) => limpiarRut(u.rut) === limpiarRut(datos.rut))) {
-        return { ok: false, motivo: "Ya existe una cuenta con ese RUT." };
-    }
-
-    const siguienteId = usuarios.reduce((mayor, u) => Math.max(mayor, u.id), 0) + 1;
-    const usuario: Usuario = {
-        ...datos,
-        id: siguienteId,
-        nombre: datos.nombre.trim(),
-        email,
-        rol: "Cliente",
-        activo: true
-    };
-
-    guardarUsuarios([...usuarios, usuario]);
-    return { ok: true, usuario };
 }
 
-export function validarCredenciales(email: string, password: string): Usuario | undefined {
-    const correo = normalizarEmail(email);
-    return listarUsuarios().find((u) => u.email === correo && u.password === password);
+/** Alta desde el panel: manda también el rol. */
+export async function crearUsuarioAdministrado(datos: UsuarioAdministrado): Promise<ResultadoRegistro> {
+    try {
+        const respuesta = await pedirConReintento(`${API_GATEWAY}/api/usuarios`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ...datos, activo: true })
+        });
+
+        if (respuesta.status === 201) {
+            return { ok: true, usuario: (await respuesta.json()) as Usuario };
+        }
+
+        return { ok: false, motivo: await motivoDeError(respuesta, "No se pudo registrar el usuario.") };
+    } catch {
+        return { ok: false, motivo: "No se pudo conectar con el servicio de usuarios." };
+    }
 }
 
-export function crearUsuarioAdministrado(
-    datos: Omit<Usuario, "id">
-): ResultadoRegistro {
-    const usuarios = listarUsuarios();
-    const email = normalizarEmail(datos.email);
+/** Login: compara la contraseña con el hash en el servicio. */
+export async function validarCredenciales(email: string, password: string): Promise<ResultadoLogin> {
+    try {
+        const respuesta = await pedirConReintento(`${API_GATEWAY}/api/usuarios/login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password })
+        });
 
-    if (!esRolValido(datos.rol)) {
-        return { ok: false, motivo: "El rol no es válido." };
+        if (respuesta.ok) {
+            return { ok: true, usuario: (await respuesta.json()) as Usuario };
+        }
+
+        return { ok: false, motivo: await motivoDeError(respuesta, "Correo o contraseña incorrectos.") };
+    } catch {
+        return { ok: false, motivo: "No se pudo conectar con el servicio de usuarios." };
     }
-
-    if (usuarios.some((u) => normalizarEmail(u.email) === email)) {
-        return { ok: false, motivo: "Ya existe una cuenta con ese correo." };
-    }
-
-    if (usuarios.some((u) => limpiarRut(u.rut) === limpiarRut(datos.rut))) {
-        return { ok: false, motivo: "Ya existe una cuenta con ese RUT." };
-    }
-
-    const usuario: Usuario = {
-        ...datos,
-        id: usuarios.reduce((mayor, u) => Math.max(mayor, u.id), 0) + 1,
-        nombre: datos.nombre.trim(),
-        email,
-    };
-
-    guardarUsuarios([...usuarios, usuario]);
-
-    return { ok: true, usuario };
 }
 
-export function cambiarRolUsuario(
-    id: number,
-    rol: Rol
-): ResultadoOperacion {
-    if (!esRolValido(rol)) {
-        return { ok: false, motivo: "El rol no es válido." };
-    }
-
-    const usuarios = listarUsuarios();
-    const usuario = usuarios.find((u) => u.id === id);
-
-    if (!usuario) {
-        return { ok: false, motivo: "Usuario no encontrado." };
-    }
-
-    if (
-        usuario.activo &&
-        usuario.rol === "Administrador" &&
-        rol !== "Administrador" &&
-        !usuarios.some(
-            (u) => u.id !== id && u.activo && u.rol === "Administrador"
-        )
-    ) {
-        return {
-            ok: false,
-            motivo: "No puedes quitar el rol al último administrador activo."
-        };
-    }
-
-    const actualizados = usuarios.map((u) =>
-        u.id === id ? { ...u, rol } : u
-    );
-
-    guardarUsuarios(actualizados);
-
-    return {
-        ok: true,
-        usuario: actualizados.find((u) => u.id === id)!
-    };
+export async function cambiarRolUsuario(id: number, rol: Rol): Promise<ResultadoOperacion> {
+    return operacion(`/api/usuarios/${id}/rol`, { rol }, "No se pudo cambiar el rol.");
 }
 
-export function cambiarEstadoUsuario(
-    id: number,
-    activo: boolean
-): ResultadoOperacion {
-    const usuarios = listarUsuarios();
-    const usuario = usuarios.find((u) => u.id === id);
-
-    if (!usuario) {
-        return { ok: false, motivo: "Usuario no encontrado." };
-    }
-
-    if (
-        !activo &&
-        usuario.activo &&
-        usuario.rol === "Administrador" &&
-        !usuarios.some(
-            (u) => u.id !== id && u.activo && u.rol === "Administrador"
-        )
-    ) {
-        return {
-            ok: false,
-            motivo: "No puedes desactivar al último administrador activo."
-        };
-    }
-
-    const actualizados = usuarios.map((u) =>
-        u.id === id ? { ...u, activo } : u
-    );
-
-    guardarUsuarios(actualizados);
-
-    return {
-        ok: true,
-        usuario: actualizados.find((u) => u.id === id)!
-    };
+export async function cambiarEstadoUsuario(id: number, activo: boolean): Promise<ResultadoOperacion> {
+    return operacion(`/api/usuarios/${id}/activo`, { activo }, "No se pudo cambiar el estado.");
 }
 
-function esRolValido(rol: unknown): rol is Rol {
-    return rol === "Cliente" || rol === "Administrador";
+async function operacion(ruta: string, cuerpo: object, porDefecto: string): Promise<ResultadoOperacion> {
+    try {
+        const respuesta = await pedirConReintento(`${API_GATEWAY}${ruta}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(cuerpo)
+        });
+
+        if (respuesta.ok) {
+            return { ok: true, usuario: (await respuesta.json()) as Usuario };
+        }
+
+        return { ok: false, motivo: await motivoDeError(respuesta, porDefecto) };
+    } catch {
+        return { ok: false, motivo: "No se pudo conectar con el servicio de usuarios." };
+    }
 }

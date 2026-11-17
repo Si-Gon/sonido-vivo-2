@@ -34,7 +34,7 @@ function Registro() {
         setComuna("");
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError("");
 
@@ -63,7 +63,7 @@ function Registro() {
             return;
         }
         
-        const resultado = registrarUsuario({ nombre, rut, email, region, comuna, password }); 
+        const resultado = await registrarUsuario({ nombre, rut, email, region, comuna, password });
         
         if (!resultado.ok) {
             setError(resultado.motivo);

@@ -1,36 +1,60 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import {
-    listarPedidos,
-    suscribirCambiosPedidos,
-    type Pedido
-} from "../datos/repositorioPedidos";
-import { listarProductos } from "../datos/repositorioProductos";
-import { listarUsuarios } from "../datos/repositorioUsuarios";
+import { ESTADOS_BOLETA, listarBoletas, type Boleta } from "../datos/repositorioBoletas";
+import { listarProductosDelServicio, type ProductoAdmin } from "../datos/repositorioCatalogo";
+import { listarUsuarios, type Usuario } from "../datos/repositorioUsuarios";
 import { formatearFecha, formatearPrecio } from "../utilidades/formato";
 
 const STOCK_BAJO = 3;
 
-function AdminDashboard() {
-    const [pedidos, setPedidos] = useState<Pedido[]>(() => listarPedidos());
+// Cada cuánto se vuelven a pedir los datos: así el panel de otro PC ve los cambios sin recargar.
+const REFRESCO_MS = 15000;
 
-    useEffect(() => {
-        const actualizar = () => setPedidos(listarPedidos());
-        const cancelar = suscribirCambiosPedidos(actualizar);
-        actualizar();
-        return cancelar;
+function AdminDashboard() {
+    const [pedidos, setPedidos] = useState<Boleta[]>([]);
+    const [productos, setProductos] = useState<ProductoAdmin[]>([]);
+    const [usuarios, setUsuarios] = useState<Usuario[]>([]);
+
+    const cargar = useCallback(async () => {
+        const [boletas, catalogo, cuentas] = await Promise.allSettled([
+            listarBoletas(),
+            listarProductosDelServicio(),
+            listarUsuarios()
+        ]);
+
+        if (boletas.status === "fulfilled") setPedidos(boletas.value);
+        if (catalogo.status === "fulfilled" && catalogo.value.ok) setProductos(catalogo.value.datos);
+        if (cuentas.status === "fulfilled") setUsuarios(cuentas.value);
     }, []);
 
-    const productos = listarProductos();
-    const usuarios = listarUsuarios();
+    useEffect(() => {
+        void cargar();
+
+        const temporizador = setInterval(() => {
+            // Con la pestaña en segundo plano no vale la pena consultar.
+            if (document.visibilityState === "visible") void cargar();
+        }, REFRESCO_MS);
+
+        // Al volver a la pestaña se refresca de inmediato, sin esperar el turno del temporizador.
+        const alVolver = () => {
+            if (document.visibilityState === "visible") void cargar();
+        };
+
+        document.addEventListener("visibilitychange", alVolver);
+
+        return () => {
+            clearInterval(temporizador);
+            document.removeEventListener("visibilitychange", alVolver);
+        };
+    }, [cargar]);
 
     const contarEstado = (estado: string) =>
         pedidos.filter((pedido) => pedido.estado === estado).length;
 
-    const cancelados = contarEstado("Cancelado");
+    const cancelados = contarEstado("CANCELADO");
     const vendido = pedidos
-        .filter((pedido) => pedido.estado !== "Cancelado")
-        .reduce((suma, pedido) => suma + pedido.total, 0);
+        .filter((pedido) => pedido.estado !== "CANCELADO")
+        .reduce((suma, pedido) => suma + Number(Number(pedido.total)), 0);
 
     const stockBajo = productos.filter((producto) => producto.stock <= STOCK_BAJO).length;
     const sinStock = productos.filter((producto) => producto.stock === 0).length;
@@ -42,7 +66,7 @@ function AdminDashboard() {
 
     const cifras = [
         { etiqueta: "Pedidos registrados", valor: String(pedidos.length), nota: `${cancelados} cancelados` },
-        { etiqueta: "Pendientes de despacho", valor: String(contarEstado("Pendiente de despacho")), nota: "por preparar" },
+        { etiqueta: "Pendientes de despacho", valor: String(contarEstado("PENDIENTE")), nota: "por preparar" },
         { etiqueta: "Ventas acumuladas", valor: formatearPrecio(vendido), nota: "sin pedidos cancelados" },
         { etiqueta: "Productos", valor: String(productos.length), nota: `${stockBajo} con stock bajo` },
         { etiqueta: "Usuarios", valor: String(usuarios.length), nota: `${activos} activos` },
@@ -98,8 +122,8 @@ function AdminDashboard() {
                                                 <td>#{pedido.id}</td>
                                                 <td>{pedido.nombreCliente}</td>
                                                 <td>{formatearFecha(pedido.fechaCreacion)}</td>
-                                                <td>{formatearPrecio(pedido.total)}</td>
-                                                <td>{pedido.estado}</td>
+                                                <td>{formatearPrecio(Number(pedido.total))}</td>
+                                                <td>{ESTADOS_BOLETA.find((e) => e.valor === pedido.estado)?.etiqueta ?? pedido.estado}</td>
                                             </tr>
                                         ))}
                                     </tbody>

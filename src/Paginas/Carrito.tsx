@@ -8,7 +8,6 @@ import { buscarProducto } from "../datos/repositorioProductos";
 import type { Producto } from "../datos/productos";
 import { formatearPrecio } from "../utilidades/formato";
 import { leerSesion } from "../datos/sesion";
-import {crearPedido} from "../datos/repositorioPedidos";
 import { descontarStockEnServicio } from "../datos/repositorioCatalogo";
 import { sincronizarCatalogo } from "../datos/repositorioProductos";
 import { cambiarEstadoBoleta, emitirBoletaEnServicio } from "../datos/repositorioBoletas";
@@ -74,9 +73,9 @@ function Carrito() {
                 throw new Error(stock.motivo);
             }
 
-            const pedido = crearPedido(items, boleta.id);
+            // El pedido ya existe en el servicio: solo se limpia el carrito y se sigue.
             vaciar();
-            navigate(`/despacho/${pedido.id}`);
+            navigate(`/despacho/${boleta.id}`);
         } catch (error) {
             const mensaje = error instanceof Error
                 ? error.message

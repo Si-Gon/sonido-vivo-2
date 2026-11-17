@@ -160,3 +160,40 @@ export async function listarDespachos(): Promise<DespachoDelPedido[]> {
 
     return (await respuesta.json()) as DespachoDelPedido[];
 }
+
+/** Boletas de un usuario: lo usa el historial de compras del panel de usuarios. */
+export async function listarBoletasDeUsuario(usuarioId: number): Promise<Boleta[]> {
+    const respuesta = await pedirConReintento(`${API_GATEWAY}/api/pedidos?usuarioId=${usuarioId}`);
+
+    if (!respuesta.ok) {
+        throw new Error(`El servicio de boletas respondió ${respuesta.status}.`);
+    }
+
+    return (await respuesta.json()) as Boleta[];
+}
+
+/** Una boleta puntual: la usan la pantalla de despacho y el comprobante de compra. */
+export async function obtenerBoleta(id: number): Promise<Boleta | undefined> {
+    const respuesta = await pedirConReintento(`${API_GATEWAY}/api/pedidos/${id}`);
+
+    if (respuesta.status === 404) return undefined;
+
+    if (!respuesta.ok) {
+        throw new Error(`El servicio de boletas respondió ${respuesta.status}.`);
+    }
+
+    return (await respuesta.json()) as Boleta;
+}
+
+/** Despacho registrado para un pedido, si ya se completó el formulario. */
+export async function obtenerDespachoDePedido(pedidoId: number): Promise<DespachoDelPedido | undefined> {
+    const respuesta = await pedirConReintento(`${API_GATEWAY}/api/despachos/pedido/${pedidoId}`);
+
+    if (respuesta.status === 404) return undefined;
+
+    if (!respuesta.ok) {
+        throw new Error(`El servicio de despachos respondió ${respuesta.status}.`);
+    }
+
+    return (await respuesta.json()) as DespachoDelPedido;
+}

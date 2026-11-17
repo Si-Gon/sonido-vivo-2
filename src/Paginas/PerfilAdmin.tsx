@@ -1,15 +1,29 @@
 import { useNavigate } from "react-router-dom";
 import Boton from "../Componentes/atomos/Boton";
 import { cerrarSesion, useSesion } from "../datos/sesion";
-import { listarUsuarios } from "../datos/repositorioUsuarios";
+import { formatearRut } from "../utilidades/rut";
+import { useEffect, useState } from "react";
+import { obtenerUsuario, type Usuario } from "../datos/repositorioUsuarios";
 
 function PerfilAdmin() {
     const sesion = useSesion();
     const navigate = useNavigate();
 
-    const usuario = sesion
-        ? listarUsuarios().find((item) => item.id === sesion.id)
-        : undefined;
+    const [usuario, setUsuario] = useState<Usuario | undefined>(undefined);
+
+    useEffect(() => {
+        if (!sesion) return;
+
+        let vigente = true;
+
+        void obtenerUsuario(sesion.id).then((datos) => {
+            if (vigente) setUsuario(datos);
+        });
+
+        return () => {
+            vigente = false;
+        };
+    }, [sesion]);
 
     const salir = () => {
         cerrarSesion();
@@ -40,7 +54,7 @@ function PerfilAdmin() {
                     <li>Nombre: {sesion.nombre}</li>
                     <li>Correo: {sesion.email}</li>
                     <li>Rol: {sesion.rol}</li>
-                    {usuario && <li>RUT: {usuario.rut}</li>}
+                    {usuario && <li>RUT: {formatearRut(usuario.rut)}</li>}
                     {usuario && usuario.region !== "" && (
                         <li>Ubicación: {usuario.comuna}, {usuario.region}</li>
                     )}

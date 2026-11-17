@@ -11,6 +11,9 @@ import {
 } from "../datos/repositorioBoletas";
 import { formatearPrecio } from "../utilidades/formato";
 
+// Cada cuánto se vuelven a pedir las boletas: otro PC ve los cambios sin recargar la página.
+const REFRESCO_MS = 15000;
+
 function AdminPedidos() {
     const [parametros] = useSearchParams();
     const [boletas, setBoletas] = useState<Boleta[]>([]);
@@ -41,6 +44,22 @@ function AdminPedidos() {
 
     useEffect(() => {
         void cargar(filtro);
+
+        const temporizador = setInterval(() => {
+            if (document.visibilityState === "visible") void cargar(filtro);
+        }, REFRESCO_MS);
+
+        // Al volver a la pestaña se refresca de inmediato, sin esperar el turno del temporizador.
+        const alVolver = () => {
+            if (document.visibilityState === "visible") void cargar(filtro);
+        };
+
+        document.addEventListener("visibilitychange", alVolver);
+
+        return () => {
+            clearInterval(temporizador);
+            document.removeEventListener("visibilitychange", alVolver);
+        };
     }, [cargar, filtro]);
 
     // Un despacho por pedido, para no recorrer la lista en cada fila.

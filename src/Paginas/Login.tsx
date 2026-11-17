@@ -32,7 +32,7 @@ function Login() {
         return "";
     });
 
-    const handleLogin = (e: React.FormEvent) => {
+    const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setError("");
 
@@ -41,16 +41,20 @@ function Login() {
             return;
         }
 
-        const usuario = validarCredenciales(email, password);
+        // El servicio compara la contraseña con el hash y responde 401 si no calza.
+        const resultado = await validarCredenciales(email, password);
 
-        if (!usuario) {
-        setError("Correo o contraseña incorrectos.");
-        return;
+        if (!resultado.ok) {
+            setError(resultado.motivo);
+            return;
         }
+
+        const { usuario } = resultado;
+
         if (!usuario.activo) {
-        setError("Tu cuenta está desactivada. Contacta a la tienda.");
-        return;
-    }
+            setError("Tu cuenta está desactivada. Contacta a la tienda.");
+            return;
+        }
 
         iniciarSesion({ id: usuario.id, nombre: usuario.nombre, email: usuario.email, rol: usuario.rol });
 

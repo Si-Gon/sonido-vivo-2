@@ -1,14 +1,10 @@
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { regionesChile } from "../datos/regiones";
 import { leerSesion } from "../datos/sesion";
 import { registrarDespachoEnServicio } from "../datos/repositorioDespachos";
-import {
-    buscarPedidoPorId,
-    guardarDatosDespacho,
-    type DatosDespacho
-} from "../datos/repositorioPedidos";
+import { obtenerBoleta, obtenerDespachoDePedido, type Boleta } from "../datos/repositorioBoletas";
 
 function Despacho() {
     const { id } = useParams();
@@ -16,22 +12,63 @@ function Despacho() {
     const sesion = leerSesion();
     const pedidoId = Number(id);
 
-    const pedido = Number.isInteger(pedidoId) && pedidoId > 0
-        ? buscarPedidoPorId(pedidoId)
-        : undefined;
-
-    const [nombre, setNombre] = useState(() => pedido?.despacho?.nombre ?? sesion?.nombre ?? "");
-    const [telefono, setTelefono] = useState(() => pedido?.despacho?.telefono ?? "");
-    const [region, setRegion] = useState(() => {
-        const nombreRegion = pedido?.despacho?.region;
-        return regionesChile.find((r) => r.id === nombreRegion || r.nombre === nombreRegion)?.id ?? "";
-    });
-    const [comuna, setComuna] = useState(() => pedido?.despacho?.comuna ?? "");
-    const [direccion, setDireccion] = useState(() => pedido?.despacho?.direccion ?? "");
-    const [referencia, setReferencia] = useState(() => pedido?.despacho?.referencia ?? "");
+    // La boleta y su despacho se leen de los servicios: nada queda guardado en el navegador.
+    const [pedido, setPedido] = useState<Boleta | undefined>(undefined);
+    const [cargando, setCargando] = useState(true);
+    const [nombre, setNombre] = useState(sesion?.nombre ?? "");
+    const [telefono, setTelefono] = useState("");
+    const [region, setRegion] = useState("");
+    const [comuna, setComuna] = useState("");
+    const [direccion, setDireccion] = useState("");
+    const [referencia, setReferencia] = useState("");
     // DOMICILIO pide dirección; RETIRO se retira en la tienda y no tiene costo de envío.
     const [tipoEntrega, setTipoEntrega] = useState<"DOMICILIO" | "RETIRO">("DOMICILIO");
     const [error, setError] = useState("");
+
+    useEffect(() => {
+        if (!Number.isInteger(pedidoId) || pedidoId <= 0) {
+            setCargando(false);
+            return;
+        }
+
+        let vigente = true;
+
+        const cargar = async () => {
+            try {
+                const [encontrada, despacho] = await Promise.all([
+                    obtenerBoleta(pedidoId),
+                    obtenerDespachoDePedido(pedidoId)
+                ]);
+
+                if (!vigente) return;
+
+                setPedido(encontrada ?? undefined);
+
+                // Si ya había un despacho, el formulario se abre con esos datos.
+                if (despacho) {
+                    setTipoEntrega(despacho.tipoEntrega);
+                    setNombre(despacho.nombre);
+                    setTelefono(despacho.telefono);
+                    setDireccion(despacho.direccion ?? "");
+                    setComuna(despacho.comuna ?? "");
+                    setReferencia(despacho.referencia ?? "");
+                    setRegion(
+                        regionesChile.find((r) => r.id === despacho.region || r.nombre === despacho.region)?.id ?? ""
+                    );
+                }
+            } catch (err) {
+                if (vigente) setError(err instanceof Error ? err.message : "No se pudo cargar el pedido.");
+            } finally {
+                if (vigente) setCargando(false);
+            }
+        };
+
+        void cargar();
+
+        return () => {
+            vigente = false;
+        };
+    }, [pedidoId]);
 
     const COSTO_ENVIO = 4990;
     const esDomicilio = tipoEntrega === "DOMICILIO";
@@ -81,7 +118,7 @@ function Despacho() {
             return;
         }
 
-        const datos: DatosDespacho = {
+        const datos = {
             nombre: nombre.trim(),
             telefono: telefono.trim(),
             region: esDomicilio && regionSeleccionada ? regionSeleccionada.nombre : "",
@@ -91,7 +128,7 @@ function Despacho() {
         };
 
         try {
-            // El despacho se registra en su servicio; la copia local queda para el resumen.
+            // El despacho se registra en su servicio; no se guarda nada en el navegador.
             const enServicio = await registrarDespachoEnServicio({
                 pedidoId: pedido.id,
                 tipoEntrega,
@@ -109,7 +146,7 @@ function Despacho() {
                 return;
             }
 
-            guardarDatosDespacho(pedido.id, datos);
+            // El despacho ya quedó en su servicio; el comprobante lo vuelve a leer de ahí.
             navigate(`/compra-exitosa/${pedido.id}`);
         } catch (err) {
             setError(err instanceof Error ? err.message : "No se pudieron guardar los datos.");
@@ -124,6 +161,15 @@ function Despacho() {
                 <button className="btn btn-warning" onClick={() => navigate("/login")}>
                     Iniciar sesión
                 </button>
+            </section>
+        );
+    }
+
+    if (cargando) {
+        return (
+            <section className="sv-seccion">
+                <h1>Datos de despacho</h1>
+                <p>Cargando el pedido…</p>
             </section>
         );
     }
@@ -145,7 +191,7 @@ function Despacho() {
     return (
         <section className="sv-seccion sv-seccion-ancha">
             <h1>Datos de despacho</h1>
-            <p>Pedido #{pedido.id} · Total: ${pedido.total.toLocaleString("es-CL")}</p>
+            <p>Pedido #{pedido.id} · Total: ${Number(pedido.total).toLocaleString("es-CL")}</p>
 
             <form onSubmit={guardar}>
                 <fieldset className="mb-3">
@@ -272,9 +318,9 @@ function Despacho() {
                 )}
 
                 <div className="sv-resumen-envio mb-3">
-                    <span>Productos: ${pedido.total.toLocaleString("es-CL")}</span>
+                    <span>Productos: ${Number(pedido.total).toLocaleString("es-CL")}</span>
                     <span>Envío: {costoEnvio === 0 ? "Sin costo" : `$${costoEnvio.toLocaleString("es-CL")}`}</span>
-                    <strong>Total a pagar: ${(pedido.total + costoEnvio).toLocaleString("es-CL")}</strong>
+                    <strong>Total a pagar: ${(Number(pedido.total) + costoEnvio).toLocaleString("es-CL")}</strong>
                 </div>
 
                 {error && <p className="text-danger" role="alert">{error}</p>}
