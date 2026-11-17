@@ -2,6 +2,18 @@ import { API_GATEWAY, pedirConReintento } from "./apiServicios";
 
 // Producto tal como lo entrega el servicio de catalogo: incluye el id de la categoria,
 // que el panel necesita para editar sin adivinar por nombre.
+/**
+ * El gateway responde 500 o 503 cuando el servicio no está arriba: para el usuario eso no es un
+ * número, es "no hay conexión".
+ */
+export function motivoDeEstado(estado: number): string {
+    if (estado >= 500) {
+        return "No se pudo conectar con el servicio de catálogo. Revisa que esté arriba.";
+    }
+
+    return `El servicio de catálogo respondió ${estado}.`;
+}
+
 export type ProductoAdmin = {
     id: number;
     codigo: string;
@@ -293,7 +305,7 @@ export async function historialMovimientos(filtros: FiltrosMovimientos = {}): Pr
     );
 
     if (!respuesta.ok) {
-        throw new Error(`El catálogo respondió ${respuesta.status}.`);
+        throw new Error(motivoDeEstado(respuesta.status));
     }
 
     return (await respuesta.json()) as Movimiento[];
@@ -304,7 +316,7 @@ export async function listarMovimientos(productoId: number): Promise<Movimiento[
     const respuesta = await pedirConReintento(`${API_GATEWAY}/api/productos/${productoId}/movimientos`);
 
     if (!respuesta.ok) {
-        throw new Error(`El catálogo respondió ${respuesta.status}.`);
+        throw new Error(motivoDeEstado(respuesta.status));
     }
 
     return (await respuesta.json()) as Movimiento[];

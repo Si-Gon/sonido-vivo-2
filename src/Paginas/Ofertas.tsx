@@ -2,13 +2,29 @@ import { useEffect, useState } from "react";
 import Aviso from "../Componentes/atomos/Aviso";
 import CardProducto from "../Componentes/moleculas/CardProducto";
 import { agregarAlCarrito, mensajeDeAgregado } from "../datos/carrito";
-import { listarProductos, CambiosProductos } from "../datos/repositorioProductos";
+import { listarProductos } from "../datos/repositorioProductos";
+import type { Producto } from "../datos/productos";
 
 function Ofertas() {
     const [aviso, setAviso] = useState("");
-    const [productos, setProductos] = useState(listarProductos());
+    const [productos, setProductos] = useState<Producto[]>([]);
+    const [error, setError] = useState("");
 
-    useEffect(() => CambiosProductos(() => setProductos(listarProductos())), []);
+    useEffect(() => {
+        let vigente = true;
+
+        void listarProductos()
+            .then((datos) => {
+                if (vigente) setProductos(datos);
+            })
+            .catch((err) => {
+                if (vigente) setError(err instanceof Error ? err.message : "No se pudo cargar el catálogo.");
+            });
+
+        return () => {
+            vigente = false;
+        };
+    }, []);
 
     const enOferta = productos.filter(
         (producto) => typeof producto.descuento === "number" && producto.descuento > 0
@@ -17,6 +33,15 @@ function Ofertas() {
     const agregarProducto = (id: number) => {
         setAviso(mensajeDeAgregado(agregarAlCarrito(id)));
     };
+
+    if (error) {
+        return (
+            <section className="sv-seccion">
+                <h1>Ofertas</h1>
+                <p className="text-danger" role="alert">{error}</p>
+            </section>
+        );
+    }
 
     return(
         <>

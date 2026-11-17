@@ -1,16 +1,59 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import Aviso from "../Componentes/atomos/Aviso";
 import Boton from "../Componentes/atomos/Boton";
 import { agregarAlCarrito, mensajeDeAgregado } from "../datos/carrito";
 import { buscarProducto } from "../datos/repositorioProductos";
+import type { Producto } from "../datos/productos";
 import { formatearPrecio, precioVigente } from "../utilidades/formato";
 
 function DetalleProducto() {
     const { id } = useParams();
     const [aviso, setAviso] = useState("");
+    const [producto, setProducto] = useState<Producto | undefined>(undefined);
+    const [cargando, setCargando] = useState(true);
+    const [error, setError] = useState("");
 
-    const producto = buscarProducto(Number(id));
+    // El detalle se pide al servicio de catálogo.
+    useEffect(() => {
+        let vigente = true;
+
+        void buscarProducto(Number(id))
+            .then((encontrado) => {
+                if (vigente) setProducto(encontrado);
+            })
+            .catch((err) => {
+                if (vigente) setError(err instanceof Error ? err.message : "No se pudo cargar el producto.");
+            })
+            .finally(() => {
+                if (vigente) setCargando(false);
+            });
+
+        return () => {
+            vigente = false;
+        };
+    }, [id]);
+
+    if (cargando) {
+        return (
+            <section className="sv-seccion">
+                <h1>Producto</h1>
+                <p>Cargando el producto…</p>
+            </section>
+        );
+    }
+
+    if (error) {
+        return (
+            <section className="sv-seccion">
+                <h1>Producto no disponible</h1>
+                <p className="text-danger" role="alert">{error}</p>
+                <div className="text-center">
+                    <Boton texto="Volver al catálogo" to="/catalogo" variante="contorno" />
+                </div>
+            </section>
+        );
+    }
 
     if (!producto) {
         return(

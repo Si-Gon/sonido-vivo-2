@@ -3,7 +3,6 @@ import CampoFormulario from "../Componentes/moleculas/CampoFormulario";
 import CampoSeleccion from "../Componentes/moleculas/CampoSeleccion";
 import Boton from "../Componentes/atomos/Boton";
 import Aviso from "../Componentes/atomos/Aviso";
-import { sincronizarCatalogo } from "../datos/repositorioProductos";
 import {
     actualizarProductoEnServicio,
     crearProductoEnServicio,
@@ -177,7 +176,6 @@ function AdminProductos() {
         setAviso(editandoId === null ? "Producto agregado al catálogo." : "Producto actualizado.");
         limpiarFormulario();
         await cargar();
-        sincronizarCatalogo();
     };
 
     const quitarProducto = async (producto: ProductoAdmin) => {
@@ -195,7 +193,6 @@ function AdminProductos() {
 
         setAviso(`"${producto.nombre}" quedó fuera del catálogo.`);
         await cargar();
-        sincronizarCatalogo();
     };
 
     return (

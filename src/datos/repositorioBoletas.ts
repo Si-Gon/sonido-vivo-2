@@ -1,6 +1,6 @@
 import { API_GATEWAY, pedirConReintento } from "./apiServicios";
 import { leerSesion } from "./sesion";
-import { buscarProducto } from "./repositorioProductos";
+import { listarProductos, productoEnMemoria } from "./repositorioProductos";
 import { precioVigente } from "../utilidades/formato";
 
 export type ItemParaBoleta = { id: number; cantidad: number };
@@ -20,9 +20,14 @@ export async function emitirBoletaEnServicio(items: ItemParaBoleta[]): Promise<R
         return { ok: false, motivo: "Debes iniciar sesión para comprar." };
     }
 
+    // El catálogo tiene que estar cargado: si el carrito se abrió en frío, se pide ahora.
+    if (items.some((item) => !productoEnMemoria(item.id))) {
+        await listarProductos().catch(() => undefined);
+    }
+
     const lineas = items
         .map((item) => {
-            const producto = buscarProducto(item.id);
+            const producto = productoEnMemoria(item.id);
             if (!producto) return null;
 
             return {

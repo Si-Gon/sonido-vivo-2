@@ -1,54 +1,62 @@
 //@vitest-environment jsdom
-import { beforeEach, expect, test } from "vitest";
-import {
-    actualizarProducto, buscarProducto, crearProducto, eliminarProducto, listarProductos, restablecerCatalogo
-} from "../datos/repositorioProductos";
+import { afterEach, beforeEach, expect, test, vi } from "vitest";
+import { buscarProducto, listarProductos, productoEnMemoria } from "../datos/repositorioProductos";
+
+const delServicio = [
+    {
+        id: 42, codigo: "AC006", categoriaId: 10, categoria: "Accesorios",
+        nombre: "Afinador de Clip", marca: "Korg", modelo: "AW-2", precio: "8990.00",
+        descuento: 10, stock: 20, descripcion: null, imagen: "ac006.jpg", activo: true
+    },
+    {
+        id: 24, codigo: "AM002", categoriaId: 6, categoria: "Amplificadores",
+        nombre: "Amplificador Guitarra 40W", marca: "Fender", modelo: "Champion 40",
+        precio: "299990.00", descuento: null, stock: 3, descripcion: "Valvular híbrido.",
+        imagen: "am002.jpg", activo: true
+    }
+];
+
+let fetchFalso: ReturnType<typeof vi.fn>;
 
 beforeEach(() => {
-    localStorage.clear();
-    restablecerCatalogo();
+    fetchFalso = vi.fn(async () =>
+        new Response(JSON.stringify(delServicio), { status: 200, headers: { "Content-Type": "application/json" } })
+    );
+
+    vi.stubGlobal("fetch", fetchFalso);
 });
 
-test("Prueba 11: crear un producto lo agrega al listado y lo guarda", () => {
-    const antes = listarProductos().length;
-
-    const nuevo = crearProducto({
-        codigo: "PR999",
-        categoria: "Percusión",
-        nombre: "Cajón Peruano",
-        marca: "Sonido Vivo",
-        modelo: "Cajón Pro",
-        precio: 189990,
-        stock: 3,
-        descripcion: "Cajón de madera con cuerdas internas.",
-        imagen: "pr999.jpg"
-    });
-
-    expect(nuevo.id).toBeGreaterThan(0);
-    expect(listarProductos().length).toBe(antes + 1);
-    expect(buscarProducto(nuevo.id)?.nombre).toBe("Cajón Peruano");
-    expect(String(localStorage.getItem("productos"))).toContain("Cajón Peruano");
+afterEach(() => {
+    vi.unstubAllGlobals();
 });
 
-test("Prueba 12: actualizar cambia solo el dato pedido y lo deja guardado", () => {
-    const original = listarProductos()[0];
+test("Prueba 11: el catálogo se pide al servicio y se convierte al modelo del sitio", async () => {
+    const productos = await listarProductos();
 
-    actualizarProducto(original.id, { precio: 111111 });
+    expect(productos.length).toBe(2);
+    expect(fetchFalso.mock.calls[0][0]).toContain("/api/productos");
 
-    const actualizado = buscarProducto(original.id);
-    expect(actualizado?.precio).toBe(111111);
-    expect(actualizado?.nombre).toBe(original.nombre);
-    expect(actualizado?.stock).toBe(original.stock);
-    expect(String(localStorage.getItem("productos"))).toContain("111111");
+    const afinador = productos[0];
+    expect(afinador.nombre).toBe("Afinador de Clip");
+    expect(afinador.categoria).toBe("Accesorios");
+    expect(afinador.precio).toBe(8990);          // el servicio manda decimal como texto
+    expect(afinador.descuento).toBe(10);
+    expect(afinador.descripcion).toBe("");       // null del servicio queda como texto vacío
 });
 
-test("Prueba 13: eliminar saca el producto del listado", () => {
-    const original = listarProductos()[0];
-    const antes = listarProductos().length;
+test("Prueba 12: buscar por id encuentra el producto y no deja copia en el navegador", async () => {
+    const encontrado = await buscarProducto(24);
 
-    eliminarProducto(original.id);
+    expect(encontrado?.nombre).toBe("Amplificador Guitarra 40W");
+    expect(productoEnMemoria(24)?.stock).toBe(3);
+    expect(await buscarProducto(9999)).toBeUndefined();
 
-    expect(listarProductos().length).toBe(antes - 1);
-    expect(buscarProducto(original.id)).toBeUndefined();
-    expect(String(localStorage.getItem("productos"))).not.toContain(original.nombre);
+    // Lo único que se guarda es la copia en memoria de la visita.
+    expect(localStorage.getItem("productos")).toBeNull();
+});
+
+test("Prueba 13: si el servicio responde con error, el catálogo falla en vez de mostrar datos viejos", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => new Response("", { status: 500 })));
+
+    await expect(listarProductos()).rejects.toThrow("500");
 });

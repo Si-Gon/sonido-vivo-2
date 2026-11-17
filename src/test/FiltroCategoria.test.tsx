@@ -1,13 +1,13 @@
 //@vitest-environment jsdom
 import { expect, test } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import Catalogo from "../Paginas/Catalogo";
 
-test("Prueba 5: el catalogo filtra los productos por categoria", () => {
+test("Prueba 5: el catalogo filtra los productos por categoria", async () => {
     render(<MemoryRouter><Catalogo /></MemoryRouter>);
 
-    expect(screen.getAllByRole("article").length).toBe(51);
+    await waitFor(() => expect(screen.getAllByRole("article").length).toBe(51));
 
     fireEvent.change(screen.getByLabelText("Categoría"), { target: { value: "Guitarras Acústicas" } });
 

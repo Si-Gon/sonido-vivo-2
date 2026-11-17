@@ -1,21 +1,38 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Aviso from "../Componentes/atomos/Aviso";
 import Boton from "../Componentes/atomos/Boton";
 import ItemCarrito from "../Componentes/moleculas/ItemCarrito";
-import { agregarAlCarrito, calcularTotal, contarUnidades, leerCarrito, mensajeDeAgregado, quitarDelCarrito, quitarUnaUnidad, vaciarCarrito, type ItemCarrito as ItemGuardado } from "../datos/carrito";
-import { buscarProducto } from "../datos/repositorioProductos";
+import { agregarAlCarrito, contarUnidades, leerCarrito, mensajeDeAgregado, quitarDelCarrito, quitarUnaUnidad, vaciarCarrito, type ItemCarrito as ItemGuardado } from "../datos/carrito";
+import { listarProductos } from "../datos/repositorioProductos";
 import type { Producto } from "../datos/productos";
-import { formatearPrecio } from "../utilidades/formato";
+import { formatearPrecio, precioVigente } from "../utilidades/formato";
 import { leerSesion } from "../datos/sesion";
 import { descontarStockEnServicio } from "../datos/repositorioCatalogo";
-import { sincronizarCatalogo } from "../datos/repositorioProductos";
 import { cambiarEstadoBoleta, emitirBoletaEnServicio } from "../datos/repositorioBoletas";
 
 function Carrito() {
     const navigate = useNavigate();
     const [items, setItems] = useState<ItemGuardado[]>(() => leerCarrito());
+    const [productos, setProductos] = useState<Producto[]>([]);
     const [aviso, setAviso] = useState("");
+
+    // Los datos de cada producto se piden al servicio: el carrito solo guarda id y cantidad.
+    useEffect(() => {
+        let vigente = true;
+
+        void listarProductos()
+            .then((datos) => {
+                if (vigente) setProductos(datos);
+            })
+            .catch(() => {
+                if (vigente) setAviso("No se pudo cargar el catálogo. Revisa la conexión con los servicios.");
+            });
+
+        return () => {
+            vigente = false;
+        };
+    }, []);
 
     const agregarUna = (id: number) => {
         const resultado = agregarAlCarrito(id);
@@ -48,9 +65,6 @@ function Carrito() {
         }
 
         try {
-            // La copia local se refresca antes de validar, para que el stock sea el de la base.
-            await sincronizarCatalogo();
-
             // 1. Se emite la boleta: el servicio calcula totales y le asigna el id.
             const boleta = await emitirBoletaEnServicio(
                 items.map((item) => ({ id: item.id, cantidad: item.cantidad }))
@@ -85,12 +99,17 @@ function Carrito() {
         }
     };
 
-    const total = calcularTotal(items);
     const unidades = contarUnidades(items);
 
     const filas = items
-        .map((item) => ({ item, producto: buscarProducto(item.id) }))
+        .map((item) => ({ item, producto: productos.find((producto) => producto.id === item.id) }))
         .filter((fila): fila is { item: ItemGuardado; producto: Producto } => Boolean(fila.producto));
+
+    // El total sale de los productos del servicio, no de una copia guardada.
+    const total = filas.reduce(
+        (suma, fila) => suma + precioVigente(fila.producto.precio, fila.producto.descuento) * fila.item.cantidad,
+        0
+    );
 
     return(
         <>

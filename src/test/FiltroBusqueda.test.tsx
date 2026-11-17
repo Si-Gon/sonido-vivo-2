@@ -1,11 +1,13 @@
 //@vitest-environment jsdom
 import { expect, test } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import Catalogo from "../Paginas/Catalogo";
 
-test("Prueba 6: el catalogo busca por nombre y avisa cuando no hay coincidencias", () => {
+test("Prueba 6: el catalogo busca por nombre y avisa cuando no hay coincidencias", async () => {
     render(<MemoryRouter><Catalogo /></MemoryRouter>);
+
+    await waitFor(() => expect(screen.getAllByRole("article").length).toBe(51));
 
     fireEvent.change(screen.getByLabelText("Buscar por nombre"), { target: { value: "guitarra" } });
 

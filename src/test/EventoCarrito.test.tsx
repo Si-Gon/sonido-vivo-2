@@ -4,6 +4,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import CardProducto from "../Componentes/moleculas/CardProducto";
 import Carrito from "../Paginas/Carrito";
+import { listarProductos } from "../datos/repositorioProductos";
 import { agregarAlCarrito } from "../datos/carrito";
 import type { Producto } from "../datos/productos";
 
@@ -44,48 +45,10 @@ test("Prueba 7: agregar al carrito avisa al padre, agrupa el repetido y no super
     tarjeta.unmount();
 
     localStorage.clear();
-    agregarAlCarrito(7);
-    agregarAlCarrito(7);
 
-    const carrito = render(<MemoryRouter><Carrito /></MemoryRouter>);
-
-    expect(screen.getAllByRole("article").length).toBe(1);
-    expect(document.querySelector(".sv-cantidad")?.textContent).toBe("2");
-    expect(document.querySelector('[aria-label^="Agregar una unidad"]')?.hasAttribute("disabled")).toBe(false);
-    expect(screen.getByText("Total a pagar: $659.980").textContent).toBe("Total a pagar: $659.980");
-    carrito.unmount();
-
-    const tercera = agregarAlCarrito(7);
-    const cuarta = agregarAlCarrito(7);
-    const quinta = agregarAlCarrito(7);
-
-    expect(tercera.agregado).toBe(true);
-    expect(cuarta.agregado).toBe(true);
-    expect(quinta.agregado).toBe(false);
-    expect(quinta.limite).toBe(4);
-    expect(quinta.items[0].cantidad).toBe(4);
-
-    render(<MemoryRouter><Carrito /></MemoryRouter>);
-
-    expect(document.querySelector(".sv-cantidad")?.textContent).toBe("4");
-    expect(document.querySelector('[aria-label^="Agregar una unidad"]')?.hasAttribute("disabled")).toBe(true);
-    expect(screen.getByText("Total a pagar: $1.319.960").textContent).toBe("Total a pagar: $1.319.960");
-    expect(screen.getByText("Stock: 4 unidades (máximo en el carrito)").textContent).toBe("Stock: 4 unidades (máximo en el carrito)");
-
-    localStorage.setItem("sesion", JSON.stringify({
-        id: 1, nombre: "Administrador", email: "admin@sonidovivo.cl", rol: "Cliente"
-    }));
-
-    mockNavigate.mockClear();
-
-    // La compra consulta el servicio de catalogo: se simulan la lista de productos y el
-    // descuento de stock para no depender de un servidor en la prueba.
-    const delServicio = [{
-        ...producto,
-        categoriaId: 2,
-        descuento: null,
-        activo: true
-    }];
+    // El catálogo vive en el servicio: se simulan la lista, la boleta y el movimiento de stock,
+    // y se carga una vez para que el carrito conozca stock y precio.
+    const delServicio = [{ ...producto, categoriaId: 2, descuento: null, activo: true }];
 
     const fetchFalso = vi.fn(async (url: string, opciones?: { method?: string; body?: string }) => {
         const metodo = opciones?.method ?? "GET";
@@ -130,16 +93,50 @@ test("Prueba 7: agregar al carrito avisa al padre, agrupa el repetido y no super
     });
 
     vi.stubGlobal("fetch", fetchFalso);
+    await listarProductos();
+
+    agregarAlCarrito(7);
+    agregarAlCarrito(7);
+
+    const carrito = render(<MemoryRouter><Carrito /></MemoryRouter>);
+
+    await waitFor(() => expect(screen.getAllByRole("article").length).toBe(1));
+    expect(document.querySelector(".sv-cantidad")?.textContent).toBe("2");
+    expect(document.querySelector('[aria-label^="Agregar una unidad"]')?.hasAttribute("disabled")).toBe(false);
+    expect(screen.getByText("Total a pagar: $659.980").textContent).toBe("Total a pagar: $659.980");
+    carrito.unmount();
+
+    const tercera = agregarAlCarrito(7);
+    const cuarta = agregarAlCarrito(7);
+    const quinta = agregarAlCarrito(7);
+
+    expect(tercera.agregado).toBe(true);
+    expect(cuarta.agregado).toBe(true);
+    expect(quinta.agregado).toBe(false);
+    expect(quinta.limite).toBe(4);
+    expect(quinta.items[0].cantidad).toBe(4);
+
+    render(<MemoryRouter><Carrito /></MemoryRouter>);
+
+    await waitFor(() => expect(document.querySelector(".sv-cantidad")?.textContent).toBe("4"));
+    expect(document.querySelector('[aria-label^="Agregar una unidad"]')?.hasAttribute("disabled")).toBe(true);
+    expect(screen.getByText("Total a pagar: $1.319.960").textContent).toBe("Total a pagar: $1.319.960");
+    expect(screen.getByText("Stock: 4 unidades (máximo en el carrito)").textContent).toBe("Stock: 4 unidades (máximo en el carrito)");
+
+    localStorage.setItem("sesion", JSON.stringify({
+        id: 1, nombre: "Administrador", email: "admin@sonidovivo.cl", rol: "Cliente"
+    }));
+
+    mockNavigate.mockClear();
 
     fireEvent.click(screen.getByText("Pagar"));
 
     await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith("/despacho/1"));
 
     expect(screen.getByText("El carrito está vacío.").textContent).toBe("El carrito está vacío.");
-    // El stock vive en la base del catálogo: acá solo se comprueba que el carrito quedó vacío.
     expect(localStorage.getItem("carrito")).toBeNull();
 
-    // El descuento quedo como SALIDA en el kardex, con la boleta como referencia.
+    // El descuento quedó como SALIDA en el kardex, con la boleta como referencia.
     const salida = fetchFalso.mock.calls.find(([url, opciones]) =>
         String(url).includes("/movimientos") && opciones?.method === "POST");
 

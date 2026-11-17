@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Aviso from "../Componentes/atomos/Aviso";
 import Boton from "../Componentes/atomos/Boton";
 import CardProducto from "../Componentes/moleculas/CardProducto";
@@ -10,8 +10,9 @@ import type { Producto } from "../datos/productos";
 
 const CANTIDAD_DESTACADOS = 8;
 
-function elegirDestacados(): Producto[] {
-    const conStock = listarProductos().filter((producto) => producto.stock > 0);
+// Mezcla los que tienen stock para que la portada no muestre siempre los mismos.
+function elegirDestacados(productos: Producto[]): Producto[] {
+    const conStock = productos.filter((producto) => producto.stock > 0);
 
     const mezclados = conStock
         .map((producto) => ({ producto, azar: Math.random() }))
@@ -23,7 +24,25 @@ function elegirDestacados(): Producto[] {
 
 function Inicio() {
     const [aviso, setAviso] = useState("");
-    const [destacados] = useState(() => elegirDestacados());
+    const [destacados, setDestacados] = useState<Producto[]>([]);
+    const [error, setError] = useState("");
+
+    // El catálogo se pide al servicio de catálogo al abrir la portada.
+    useEffect(() => {
+        let vigente = true;
+
+        void listarProductos()
+            .then((productos) => {
+                if (vigente) setDestacados(elegirDestacados(productos));
+            })
+            .catch((err) => {
+                if (vigente) setError(err instanceof Error ? err.message : "No se pudo cargar el catálogo.");
+            });
+
+        return () => {
+            vigente = false;
+        };
+    }, []);
 
     const agregarProducto = (id: number) => {
         setAviso(mensajeDeAgregado(agregarAlCarrito(id)));
@@ -31,6 +50,8 @@ function Inicio() {
 
     return(
         <>
+            {error && <p className="text-danger" role="alert">{error}</p>}
+
             <section className="sv-hero">
                 <img
                 className="sv-hero-imagen"

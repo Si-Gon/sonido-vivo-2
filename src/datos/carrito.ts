@@ -1,5 +1,5 @@
 import { precioVigente } from "../utilidades/formato";
-import { buscarProducto } from "./repositorioProductos";
+import { productoEnMemoria } from "./repositorioProductos";
 
 const CLAVE = "carrito";
 
@@ -67,7 +67,7 @@ export function cantidadEnCarrito(id: number, items: ItemCarrito[] = leerCarrito
 }
 
 export function stockDisponible(id: number, items: ItemCarrito[] = leerCarrito()): number {
-    const producto = buscarProducto(id);
+    const producto = productoEnMemoria(id);
     if (!producto) return 0;
 
     return Math.max(producto.stock - cantidadEnCarrito(id, items), 0);
@@ -75,7 +75,7 @@ export function stockDisponible(id: number, items: ItemCarrito[] = leerCarrito()
 
 export function agregarAlCarrito(id: number): ResultadoCarrito {
     const items = leerCarrito();
-    const producto = buscarProducto(id);
+    const producto = productoEnMemoria(id);
     const limite = producto ? producto.stock : 0;
 
     if (!producto || cantidadEnCarrito(id, items) >= producto.stock) {
@@ -122,7 +122,7 @@ export function vaciarCarrito() {
 
 export function calcularTotal(items: ItemCarrito[]): number {
     return items.reduce((total, item) => {
-        const producto = buscarProducto(item.id);
+        const producto = productoEnMemoria(item.id);
         return total + (producto ? precioVigente(producto.precio, producto.descuento) * item.cantidad : 0);
     }, 0);
 }

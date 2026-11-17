@@ -1,15 +1,17 @@
 //@vitest-environment jsdom
 import { expect, test } from "vitest";
-import { render } from "@testing-library/react";
+import { render, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import Catalogo from "../Paginas/Catalogo";
 import LayoutPublico from "../Componentes/organismos/LayoutPublico";
 
-test("Prueba 4: las vistas declaran las clases responsivas de Bootstrap", () => {
+test("Prueba 4: las vistas declaran las clases responsivas de Bootstrap", async () => {
     const { unmount } = render(<MemoryRouter><Catalogo /></MemoryRouter>);
 
+    // El catálogo llega desde el servicio: se espera a que estén las 51 tarjetas.
+    await waitFor(() => expect(document.querySelectorAll(".sv-card").length).toBe(51));
+
     const tarjetas = Array.from(document.querySelectorAll(".sv-card"));
-    expect(tarjetas.length).toBe(51);
 
     const columnas = tarjetas.map((tarjeta) => tarjeta.parentElement?.className ?? "");
     expect(columnas.filter((columna) => columna.includes("col-12")).length).toBe(51);
