@@ -13,7 +13,10 @@ export type ResultadoBoleta =
  * Emite la boleta en el servicio de boletas. El servicio calcula subtotales y total:
  * el navegador solo manda el carrito.
  */
-export async function emitirBoletaEnServicio(items: ItemParaBoleta[]): Promise<ResultadoBoleta> {
+export async function emitirBoletaEnServicio(
+    items: ItemParaBoleta[],
+    claveIdempotencia?: string
+): Promise<ResultadoBoleta> {
     const sesion = leerSesion();
 
     if (!sesion) {
@@ -51,7 +54,8 @@ export async function emitirBoletaEnServicio(items: ItemParaBoleta[]): Promise<R
                 usuarioId: sesion.id,
                 nombreCliente: sesion.nombre,
                 emailCliente: sesion.email,
-                items: lineas
+                items: lineas,
+                claveIdempotencia
             })
         });
 

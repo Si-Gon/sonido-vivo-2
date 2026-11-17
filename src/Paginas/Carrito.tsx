@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Aviso from "../Componentes/atomos/Aviso";
 import Boton from "../Componentes/atomos/Boton";
@@ -14,6 +14,8 @@ import { cambiarEstadoBoleta, emitirBoletaEnServicio } from "../datos/repositori
 function Carrito() {
     const navigate = useNavigate();
     const [items, setItems] = useState<ItemGuardado[]>(() => leerCarrito());
+    // Una clave por intento de pago: si la red falla y se reintenta, no se emite una segunda boleta.
+    const clavePago = useRef<string | null>(null);
     const [productos, setProductos] = useState<Producto[]>([]);
     const [aviso, setAviso] = useState("");
 
@@ -66,8 +68,13 @@ function Carrito() {
 
         try {
             // 1. Se emite la boleta: el servicio calcula totales y le asigna el id.
+            if (!clavePago.current) {
+                clavePago.current = crypto.randomUUID();
+            }
+
             const boleta = await emitirBoletaEnServicio(
-                items.map((item) => ({ id: item.id, cantidad: item.cantidad }))
+                items.map((item) => ({ id: item.id, cantidad: item.cantidad })),
+                clavePago.current
             );
 
             if (!boleta.ok) {
@@ -88,6 +95,7 @@ function Carrito() {
             }
 
             // El pedido ya existe en el servicio: solo se limpia el carrito y se sigue.
+            clavePago.current = null;
             vaciar();
             navigate(`/despacho/${boleta.id}`);
         } catch (error) {
