@@ -77,3 +77,9 @@ a:hover {
     background-color: var(--laton);
     color: var(--tinta);
 }
+
+/* Bootstrap pinta .text-muted con #6C757D, que sobre el panel oscuro queda en 3,4:1 y no se lee.
+   Se usa el gris tenue del tema, que sobre el panel da 5,7:1 y cumple AA para texto normal. */
+.text-muted {
+    color: var(--texto-tenue) !important;
+}
