@@ -8,6 +8,8 @@ export type Sesion = {
     nombre: string;
     email: string;
     rol: Rol;
+    // Token JWT que emite el servicio de usuarios: viaja en cada petición al gateway.
+    token: string;
 };
 
 const oyentes = new Set<() => void>();
@@ -30,6 +32,10 @@ export function leerSesion(): Sesion | null {
 
 function avisar() {
     oyentes.forEach((oyente) => oyente());
+}
+
+export function leerToken(): string | null {
+    return leerSesion()?.token ?? null;
 }
 
 export function iniciarSesion(sesion: Sesion) {

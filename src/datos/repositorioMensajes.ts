@@ -1,3 +1,4 @@
+import { cabecerasConToken } from "./apiServicios";
 import { API_MENSAJERIA } from "./apiMensajeria";
 
 export type EstadoMensaje = "PENDIENTE" | "RESPONDIDO";
@@ -66,7 +67,7 @@ export const cambiarEstadoMensaje = async (id: number, estado: EstadoMensaje): P
     try {
         const respuesta = await fetch(`${API_MENSAJERIA}/api/contacto/${id}/estado`, {
             method: "PATCH",
-            headers: { "Content-Type": "application/json" },
+            headers: cabecerasConToken(),
             body: JSON.stringify({ estado })
         });
 

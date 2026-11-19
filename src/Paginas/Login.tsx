@@ -56,7 +56,14 @@ function Login() {
             return;
         }
 
-        iniciarSesion({ id: usuario.id, nombre: usuario.nombre, email: usuario.email, rol: usuario.rol });
+        // La sesión guarda el token: es lo que el gateway valida en cada petición.
+        iniciarSesion({
+            id: usuario.id,
+            nombre: usuario.nombre,
+            email: usuario.email,
+            rol: usuario.rol,
+            token: resultado.token
+        });
 
         const porRol = usuario.rol === "Administrador" ? "/admin" : "/catalogo";
         const destino = veniaDe?.desde;

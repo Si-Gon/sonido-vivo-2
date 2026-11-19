@@ -1,4 +1,4 @@
-import { API_GATEWAY, pedirConReintento } from "./apiServicios";
+import { API_GATEWAY, pedirConReintento, cabecerasConToken } from "./apiServicios";
 
 export type DatosDespachoParaServicio = {
     pedidoId: number;
@@ -21,7 +21,7 @@ export async function registrarDespachoEnServicio(datos: DatosDespachoParaServic
     try {
         const respuesta = await pedirConReintento(`${API_GATEWAY}/api/despachos`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: cabecerasConToken(),
             body: JSON.stringify(datos)
         });
 

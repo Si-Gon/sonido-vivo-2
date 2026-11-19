@@ -1,4 +1,4 @@
-import { API_GATEWAY, pedirConReintento } from "./apiServicios";
+import { API_GATEWAY, pedirConReintento, cabecerasConToken } from "./apiServicios";
 
 // El servicio nunca devuelve la contraseña: solo viaja al registrar y al iniciar sesión.
 export type Usuario = {
@@ -34,7 +34,7 @@ export type ResultadoRegistro =
 export type ResultadoOperacion = ResultadoRegistro;
 
 export type ResultadoLogin =
-    | { ok: true; usuario: Usuario }
+    | { ok: true; usuario: Usuario; token: string }
     | { ok: false; motivo: string };
 
 /** Mensaje que mandó el servicio, o uno por defecto si no vino cuerpo. */
@@ -70,7 +70,7 @@ export async function registrarUsuario(datos: UsuarioNuevo): Promise<ResultadoRe
     try {
         const respuesta = await pedirConReintento(`${API_GATEWAY}/api/usuarios`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: cabecerasConToken(),
             body: JSON.stringify(datos)
         });
 
@@ -89,7 +89,7 @@ export async function crearUsuarioAdministrado(datos: UsuarioAdministrado): Prom
     try {
         const respuesta = await pedirConReintento(`${API_GATEWAY}/api/usuarios`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: cabecerasConToken(),
             body: JSON.stringify({ ...datos, activo: true })
         });
 
@@ -108,12 +108,14 @@ export async function validarCredenciales(email: string, password: string): Prom
     try {
         const respuesta = await pedirConReintento(`${API_GATEWAY}/api/usuarios/login`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: cabecerasConToken(),
             body: JSON.stringify({ email, password })
         });
 
         if (respuesta.ok) {
-            return { ok: true, usuario: (await respuesta.json()) as Usuario };
+            // El login devuelve { token, usuario }: el token viaja en las siguientes peticiones.
+            const cuerpo = (await respuesta.json()) as { token: string; usuario: Usuario };
+            return { ok: true, usuario: cuerpo.usuario, token: cuerpo.token };
         }
 
         return { ok: false, motivo: await motivoDeError(respuesta, "Correo o contraseña incorrectos.") };
@@ -134,7 +136,7 @@ async function operacion(ruta: string, cuerpo: object, porDefecto: string): Prom
     try {
         const respuesta = await pedirConReintento(`${API_GATEWAY}${ruta}`, {
             method: "PATCH",
-            headers: { "Content-Type": "application/json" },
+            headers: cabecerasConToken(),
             body: JSON.stringify(cuerpo)
         });
 

@@ -1,4 +1,4 @@
-import { API_GATEWAY, pedirConReintento } from "./apiServicios";
+import { API_GATEWAY, pedirConReintento, cabecerasConToken } from "./apiServicios";
 import { leerSesion } from "./sesion";
 import { listarProductos, productoEnMemoria } from "./repositorioProductos";
 import { precioVigente } from "../utilidades/formato";
@@ -49,7 +49,7 @@ export async function emitirBoletaEnServicio(
     try {
         const respuesta = await pedirConReintento(`${API_GATEWAY}/api/pedidos`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: cabecerasConToken(),
             body: JSON.stringify({
                 usuarioId: sesion.id,
                 nombreCliente: sesion.nombre,
@@ -139,7 +139,7 @@ export async function listarBoletas(estado?: EstadoBoleta): Promise<Boleta[]> {
 export async function cambiarEstadoBoleta(id: number, estado: EstadoBoleta): Promise<Boleta> {
     const respuesta = await pedirConReintento(`${API_GATEWAY}/api/pedidos/${id}/estado`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: cabecerasConToken(),
         body: JSON.stringify({ estado })
     });
 

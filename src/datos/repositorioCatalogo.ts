@@ -1,4 +1,4 @@
-import { API_GATEWAY, pedirConReintento } from "./apiServicios";
+import { API_GATEWAY, pedirConReintento, cabecerasConToken } from "./apiServicios";
 
 // Producto tal como lo entrega el servicio de catalogo: incluye el id de la categoria,
 // que el panel necesita para editar sin adivinar por nombre.
@@ -97,7 +97,7 @@ export async function crearProductoEnServicio(datos: ProductoParaGuardar): Promi
     try {
         const respuesta = await fetch(`${BASE}/productos`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: cabecerasConToken(),
             body: JSON.stringify(datos)
         });
 
@@ -115,7 +115,7 @@ export async function actualizarProductoEnServicio(id: number, datos: ProductoPa
     try {
         const respuesta = await fetch(`${BASE}/productos/${id}`, {
             method: "PUT",
-            headers: { "Content-Type": "application/json" },
+            headers: cabecerasConToken(),
             body: JSON.stringify(datos)
         });
 
@@ -155,7 +155,7 @@ export async function ajustarStockEnServicio(id: number, stock: number): Promise
     try {
         const respuesta = await fetch(`${BASE}/productos/${id}/stock`, {
             method: "PATCH",
-            headers: { "Content-Type": "application/json" },
+            headers: cabecerasConToken(),
             body: JSON.stringify({ stock })
         });
 
@@ -259,7 +259,7 @@ export async function registrarMovimiento(
     try {
         const respuesta = await pedirConReintento(`${API_GATEWAY}/api/productos/${productoId}/movimientos`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: cabecerasConToken(),
             body: JSON.stringify({ tipo, cantidad, motivo, referencia })
         });
 
