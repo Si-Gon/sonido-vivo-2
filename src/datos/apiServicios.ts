@@ -1,7 +1,7 @@
 // Direccion unica de los servicios: el gateway reparte /api/** al microservicio que corresponde.
 // Si se quiere ir directo a un servicio sin gateway, se cambia solo aca o en el repositorio
 // correspondiente (catalogo 8091, boletas 8093, despachos 8094, mensajeria 8095).
-import { leerToken } from "./sesion";
+import { cerrarSesion, leerToken } from "./sesion";
 
 export const API_GATEWAY = "http://localhost:8090";
 
@@ -41,6 +41,13 @@ export async function pedirConReintento(
     for (let intento = 1; intento <= intentos; intento++) {
         try {
             const respuesta = await fetch(url, opcionesFinales);
+
+            // Token vencido o rechazado: se cierra la sesión y RutaPrivada manda al login.
+            // No se hace acá la redirección, para no mezclar el acceso a datos con la navegación.
+            if (respuesta.status === 401 && leerToken()) {
+                cerrarSesion();
+                return respuesta;
+            }
 
             if (respuesta.status !== 503 && respuesta.status !== 504) {
                 return respuesta;
