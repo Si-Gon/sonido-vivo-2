@@ -135,7 +135,10 @@ export async function actualizarProductoEnServicio(id: number, datos: ProductoPa
 
 export async function desactivarProductoEnServicio(id: number): Promise<Resultado<null>> {
     try {
-        const respuesta = await fetch(`${BASE}/productos/${id}`, { method: "DELETE" });
+        const respuesta = await fetch(`${BASE}/productos/${id}`, {
+            method: "DELETE",
+            headers: cabecerasConToken()
+        });
 
         if (respuesta.status === 204) {
             return { ok: true, datos: null };
