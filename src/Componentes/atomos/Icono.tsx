@@ -1,4 +1,4 @@
-type Nombre = "ubicacion" | "experiencia" | "catalogo";
+type Nombre = "ubicacion" | "experiencia" | "catalogo" | "carrito";
 
 type Props = {
     nombre: Nombre;
@@ -31,6 +31,14 @@ function Icono({ nombre }: Props) {
                 <>
                     <circle cx="12" cy="12" r="9" />
                     <path d="M12 7v5l4 2" />
+                </>
+            )}
+
+            {nombre === "carrito" && (
+                <>
+                    <circle cx="9" cy="20" r="1.5" />
+                    <circle cx="18" cy="20" r="1.5" />
+                    <path d="M2 3h3l2.4 11.2a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.5L21 7H6.2" />
                 </>
             )}
 

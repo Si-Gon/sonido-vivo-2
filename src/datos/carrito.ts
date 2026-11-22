@@ -1,3 +1,4 @@
+import { useSyncExternalStore } from "react";
 import { precioVigente } from "../utilidades/formato";
 import { productoEnMemoria } from "./repositorioProductos";
 
@@ -50,8 +51,27 @@ export function leerCarrito(): ItemCarrito[] {
     }
 }
 
+// Quien muestra el carrito (por ejemplo el ícono del Navbar) se suscribe acá para enterarse
+// cuando cambia, sin recargar la página.
+const oyentes = new Set<() => void>();
+
+function avisar() {
+    oyentes.forEach((oyente) => oyente());
+}
+
+function suscribir(oyente: () => void) {
+    oyentes.add(oyente);
+    // "storage" avisa cuando el carrito cambia en otra pestaña del navegador.
+    window.addEventListener("storage", oyente);
+    return () => {
+        oyentes.delete(oyente);
+        window.removeEventListener("storage", oyente);
+    };
+}
+
 function guardarCarrito(items: ItemCarrito[]) {
     localStorage.setItem(CLAVE, JSON.stringify(items));
+    avisar();
 }
 
 export function mensajeDeAgregado(resultado: ResultadoCarrito): string {
@@ -118,6 +138,7 @@ export function quitarDelCarrito(id: number): ItemCarrito[] {
 
 export function vaciarCarrito() {
     localStorage.removeItem(CLAVE);
+    avisar();
 }
 
 export function calcularTotal(items: ItemCarrito[]): number {
@@ -129,4 +150,9 @@ export function calcularTotal(items: ItemCarrito[]): number {
 
 export function contarUnidades(items: ItemCarrito[]): number {
     return items.reduce((unidades, item) => unidades + item.cantidad, 0);
+}
+
+/** Unidades que hay en el carrito; se actualiza sola cada vez que el carrito cambia. */
+export function useUnidadesCarrito(): number {
+    return useSyncExternalStore(suscribir, () => contarUnidades(leerCarrito()), () => 0);
 }

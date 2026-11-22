@@ -183,6 +183,61 @@ main {
     text-decoration: none;
 }
 
+/* Ícono del carrito: a la derecha en PC, junto al botón del menú en el celular. */
+.sv-carrito-icono {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    margin-left: auto;
+    margin-right: .5rem;
+    border-radius: var(--radius-sm);
+    color: var(--texto-suave);
+    transition: background-color .15s ease, color .15s ease;
+}
+
+.sv-carrito-icono .sv-icono {
+    width: 22px;
+    height: 22px;
+    margin-top: 0;
+}
+
+.sv-carrito-icono:hover {
+    background-color: var(--panel-alto);
+    color: var(--texto);
+}
+
+.sv-carrito-icono.active {
+    color: var(--laton);
+    background-color: rgba(217, 165, 77, .12);
+}
+
+.sv-carrito-contador {
+    position: absolute;
+    top: .1rem;
+    right: .05rem;
+    min-width: 1.15rem;
+    height: 1.15rem;
+    padding: 0 .3rem;
+    border-radius: 999px;
+    background-color: var(--laton);
+    color: var(--tinta);
+    font-size: .68rem;
+    font-weight: 700;
+    line-height: 1.15rem;
+    text-align: center;
+}
+
+@media (min-width: 992px) {
+    .sv-carrito-icono {
+        order: 3;
+        margin-left: .75rem;
+        margin-right: 0;
+    }
+}
+
 .sv-marca {
     display: flex;
     align-items: center;

@@ -1,5 +1,7 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { cerrarSesion, useSesion } from "../../datos/sesion";
+import { useUnidadesCarrito } from "../../datos/carrito";
+import Icono from "../atomos/Icono";
 
 const claseEnlace = ({ isActive }: { isActive: boolean }) => (
     isActive ? "nav-link active" : "nav-link"
@@ -10,6 +12,7 @@ function Navbar() {
     // entera se cae (useSyncExternalStore sobre null) en todas las rutas, no solo en esta.
     const sesion = useSesion();
     const navigate = useNavigate();
+    const unidades = useUnidadesCarrito();
 
     const salir = () => {
         cerrarSesion();
@@ -24,6 +27,18 @@ function Navbar() {
                     <img src="/img/logo-claro.png" alt="" className="sv-logo" />
                     Sonido Vivo
                 </Link>
+
+                {/* El carrito va fuera del menú desplegable: se ve siempre, también en el celular. */}
+                <NavLink
+                className={({ isActive }) => isActive ? "sv-carrito-icono active" : "sv-carrito-icono"}
+                to="/carrito"
+                aria-label={unidades > 0 ? `Carrito, ${unidades} productos` : "Carrito vacío"}
+                >
+                    <Icono nombre="carrito" />
+                    {unidades > 0 && (
+                        <span className="sv-carrito-contador">{unidades > 99 ? "99+" : unidades}</span>
+                    )}
+                </NavLink>
 
                 <button
                 className="navbar-toggler"
@@ -51,9 +66,6 @@ function Navbar() {
                         </li>
                         <li className="nav-item">
                             <NavLink className={claseEnlace} to="/ofertas">Ofertas</NavLink>
-                        </li>
-                        <li className="nav-item">
-                            <NavLink className={claseEnlace} to="/carrito">Carrito</NavLink>
                         </li>
                         <li className="nav-item">
                             <NavLink className={claseEnlace} to="/novedades">Novedades</NavLink>
