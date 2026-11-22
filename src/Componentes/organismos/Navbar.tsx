@@ -75,6 +75,9 @@ function Navbar() {
                         </li>
                         {sesion ? (
                             <>
+                                <li className="nav-item">
+                                    <NavLink className={claseEnlace} to="/mis-compras">Mis compras</NavLink>
+                                </li>
                                 {sesion.rol === "Administrador" && (
                                     <li className="nav-item">
                                         <NavLink className={claseEnlace} to="/admin">Panel</NavLink>
