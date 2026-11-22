@@ -33,7 +33,9 @@ export const listarMensajes = async (estado?: EstadoMensaje): Promise<ResultadoL
     const consulta = estado ? `?estado=${estado}` : "";
 
     try {
-        const respuesta = await fetch(`${API_MENSAJERIA}/api/contacto${consulta}`);
+        const respuesta = await fetch(`${API_MENSAJERIA}/api/contacto${consulta}`, {
+            headers: cabecerasConToken()
+        });
 
         if (!respuesta.ok) {
             return { ok: false, motivo: mensajeDeError(respuesta.status) };
@@ -47,7 +49,9 @@ export const listarMensajes = async (estado?: EstadoMensaje): Promise<ResultadoL
 
 export const obtenerMensaje = async (id: number): Promise<ResultadoMensaje> => {
     try {
-        const respuesta = await fetch(`${API_MENSAJERIA}/api/contacto/${id}`);
+        const respuesta = await fetch(`${API_MENSAJERIA}/api/contacto/${id}`, {
+            headers: cabecerasConToken()
+        });
 
         if (respuesta.status === 404) {
             return { ok: false, motivo: "El mensaje no existe o ya fue eliminado." };
@@ -83,7 +87,10 @@ export const cambiarEstadoMensaje = async (id: number, estado: EstadoMensaje): P
 
 export const eliminarMensaje = async (id: number): Promise<ResultadoAccion> => {
     try {
-        const respuesta = await fetch(`${API_MENSAJERIA}/api/contacto/${id}`, { method: "DELETE" });
+        const respuesta = await fetch(`${API_MENSAJERIA}/api/contacto/${id}`, {
+            method: "DELETE",
+            headers: cabecerasConToken()
+        });
 
         if (!respuesta.ok) {
             return { ok: false, motivo: mensajeDeError(respuesta.status) };
