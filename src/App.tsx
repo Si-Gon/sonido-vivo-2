@@ -27,6 +27,7 @@ import CompraExitosa from './Paginas/CompraExitosa'
 import PagoError from './Paginas/PagoError'
 import AdminDashboard from './Paginas/AdminDashboard'
 import PerfilAdmin from './Paginas/PerfilAdmin'
+import MisCompras from './Paginas/MisCompras'
 
 function App() {
 
@@ -97,6 +98,11 @@ function App() {
         <Route
         path='/contacto'
         element={<Contacto/>}
+        />
+
+        <Route
+        path='/mis-compras'
+        element={<RutaPrivada><MisCompras/></RutaPrivada>}
         />
 
         <Route
