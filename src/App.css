@@ -1002,3 +1002,131 @@ label {
     white-space: pre-wrap;
     word-break: break-word;
 }
+/* Mis compras: cada pedido con su seguimiento (los mismos estados que elige el admin) */
+.sv-compra {
+    display: grid;
+    gap: 1.1rem;
+}
+
+.sv-compra-cabecera {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: .75rem;
+}
+
+.sv-compra-cabecera h2 {
+    font-size: 1.2rem;
+    margin: 0;
+}
+
+.sv-compra-meta {
+    color: var(--texto-suave);
+    font-size: .9rem;
+    margin: .25rem 0 0;
+}
+
+.sv-compra-estado {
+    display: inline-block;
+    padding: .3rem .75rem;
+    border-radius: 999px;
+    font-size: .8rem;
+    font-weight: 600;
+    border: 1px solid currentColor;
+    color: var(--laton);
+}
+
+.sv-compra-estado-entregado {
+    color: var(--verde);
+}
+
+.sv-compra-estado-cancelado {
+    color: var(--rojo);
+}
+
+.sv-compra-cancelado {
+    color: var(--rojo);
+    margin: 0;
+}
+
+.sv-seguimiento {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sv-seguimiento li {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .45rem;
+    text-align: center;
+    color: var(--texto-tenue);
+    font-size: .82rem;
+}
+
+.sv-seguimiento li + li::before {
+    content: "";
+    position: absolute;
+    top: .45rem;
+    right: 50%;
+    width: 100%;
+    height: 2px;
+    background: var(--linea);
+}
+
+.sv-seguimiento-punto {
+    position: relative;
+    z-index: 1;
+    width: .95rem;
+    height: .95rem;
+    border-radius: 50%;
+    background: var(--panel);
+    border: 2px solid var(--borde-campo);
+}
+
+.sv-seguimiento li.hecho,
+.sv-seguimiento li.actual {
+    color: var(--texto);
+}
+
+.sv-seguimiento li.hecho .sv-seguimiento-punto,
+.sv-seguimiento li.actual .sv-seguimiento-punto {
+    background: var(--laton);
+    border-color: var(--laton);
+}
+
+.sv-seguimiento li.actual .sv-seguimiento-punto {
+    box-shadow: 0 0 0 4px rgba(217, 165, 77, .25);
+}
+
+.sv-seguimiento li.hecho + li::before,
+.sv-seguimiento li.hecho + li.actual::before {
+    background: var(--laton);
+}
+
+.sv-seguimiento li.actual .sv-seguimiento-texto {
+    color: var(--laton);
+    font-weight: 600;
+}
+
+.sv-compra-items {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    border-top: 1px solid var(--linea-suave);
+}
+
+.sv-compra-items li {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: .55rem 0;
+    border-bottom: 1px solid var(--linea-suave);
+    color: var(--texto-suave);
+    font-size: .92rem;
+}
