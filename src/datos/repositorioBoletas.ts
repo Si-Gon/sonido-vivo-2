@@ -181,6 +181,24 @@ export async function listarBoletasDeUsuario(usuarioId: number): Promise<Boleta[
     return (await respuesta.json()) as Boleta[];
 }
 
+/**
+ * Compras del usuario con sesión, para "Mis compras". El servicio sabe quién es por el token:
+ * no se manda el id, así nadie puede pedir las compras de otra persona.
+ */
+export async function listarMisCompras(): Promise<Boleta[]> {
+    const respuesta = await pedirConReintento(`${API_GATEWAY}/api/pedidos/mios`);
+
+    if (respuesta.status === 401) {
+        throw new Error("Tu sesión venció. Cierra sesión y vuelve a entrar para ver tus compras.");
+    }
+
+    if (!respuesta.ok) {
+        throw new Error(`El servicio de boletas respondió ${respuesta.status}.`);
+    }
+
+    return (await respuesta.json()) as Boleta[];
+}
+
 /** Una boleta puntual: la usan la pantalla de despacho y el comprobante de compra. */
 export async function obtenerBoleta(id: number): Promise<Boleta | undefined> {
     const respuesta = await pedirConReintento(`${API_GATEWAY}/api/pedidos/${id}`);
