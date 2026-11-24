@@ -1,7 +1,6 @@
 import { API_GATEWAY, pedirConReintento, cabecerasConToken } from "./apiServicios";
 import { leerSesion } from "./sesion";
 import { listarProductos, productoEnMemoria } from "./repositorioProductos";
-import { precioVigente } from "../utilidades/formato";
 
 export type ItemParaBoleta = { id: number; cantidad: number };
 
@@ -33,12 +32,9 @@ export async function emitirBoletaEnServicio(
             const producto = productoEnMemoria(item.id);
             if (!producto) return null;
 
-            return {
-                productoId: producto.id,
-                nombreProducto: producto.nombre,
-                precioUnitario: precioVigente(producto.precio, producto.descuento),
-                cantidad: item.cantidad
-            };
+            // Solo el producto y la cantidad: el nombre y el precio los pone el servicio de
+            // boletas leyéndolos del catálogo, así el total no depende del navegador.
+            return { productoId: producto.id, cantidad: item.cantidad };
         })
         .filter((linea): linea is NonNullable<typeof linea> => linea !== null);
 

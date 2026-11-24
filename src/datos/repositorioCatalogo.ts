@@ -178,58 +178,6 @@ export async function ajustarStockEnServicio(id: number, stock: number): Promise
 
 export type ItemParaDescontar = { id: number; cantidad: number };
 
-/**
- * Descuenta del stock del servicio lo que lleva el carrito. Se lee el stock actual antes de
- * escribir, para no pisar una venta hecha desde otra pestaña, y se valida que alcance.
- */
-export async function descontarStockEnServicio(
-    items: ItemParaDescontar[],
-    referencia: string
-): Promise<Resultado<number>> {
-    const lista = await listarProductosDelServicio();
-
-    if (!lista.ok) {
-        return { ok: false, motivo: lista.motivo };
-    }
-
-    const porId = new Map(lista.datos.map((producto) => [producto.id, producto]));
-    const pedidoPorProducto = new Map<number, number>();
-
-    for (const item of items) {
-        if (!Number.isInteger(item.cantidad) || item.cantidad <= 0) {
-            return { ok: false, motivo: "El carrito contiene cantidades inválidas." };
-        }
-
-        pedidoPorProducto.set(item.id, (pedidoPorProducto.get(item.id) ?? 0) + item.cantidad);
-    }
-
-    // Primero se valida todo: no se descuenta nada si algún producto no alcanza.
-    for (const [id, cantidad] of pedidoPorProducto) {
-        const producto = porId.get(id);
-
-        if (!producto) {
-            return { ok: false, motivo: "Uno de los productos del carrito ya no está en el catálogo." };
-        }
-
-        if (producto.stock < cantidad) {
-            return {
-                ok: false,
-                motivo: `Stock insuficiente para "${producto.nombre}": quedan ${producto.stock} y el carrito pide ${cantidad}.`
-            };
-        }
-    }
-
-    // Una SALIDA por producto, con la boleta como referencia: queda en el kardex y no se repite.
-    for (const [id, cantidad] of pedidoPorProducto) {
-        const movimiento = await registrarMovimiento(id, "SALIDA", cantidad, "VENTA", referencia);
-
-        if (!movimiento.ok) {
-            return { ok: false, motivo: movimiento.motivo };
-        }
-    }
-
-    return { ok: true, datos: pedidoPorProducto.size };
-}
 
 // ---------------------------------------------------------------- kardex
 

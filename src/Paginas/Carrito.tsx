@@ -8,8 +8,7 @@ import { listarProductos } from "../datos/repositorioProductos";
 import type { Producto } from "../datos/productos";
 import { formatearPrecio, precioVigente } from "../utilidades/formato";
 import { leerSesion } from "../datos/sesion";
-import { descontarStockEnServicio } from "../datos/repositorioCatalogo";
-import { cambiarEstadoBoleta, emitirBoletaEnServicio } from "../datos/repositorioBoletas";
+import { emitirBoletaEnServicio } from "../datos/repositorioBoletas";
 
 function Carrito() {
     const navigate = useNavigate();
@@ -81,20 +80,8 @@ function Carrito() {
                 throw new Error(boleta.motivo);
             }
 
-            // 2. El stock baja como SALIDA del kardex, con la boleta como referencia.
-            const stock = await descontarStockEnServicio(
-                items.map((item) => ({ id: item.id, cantidad: item.cantidad })),
-                `PEDIDO-${boleta.id}`
-            );
-
-            if (!stock.ok) {
-                // 3. Compensación: si el stock no alcanzó, se cancela la boleta y el catálogo
-                //    devuelve solo lo que esa misma referencia había vendido.
-                await cambiarEstadoBoleta(boleta.id, "CANCELADO").catch(() => undefined);
-                throw new Error(stock.motivo);
-            }
-
-            // El pedido ya existe en el servicio: solo se limpia el carrito y se sigue.
+            // 2. El descuento de stock lo hace el servicio de boletas junto con la emisión: si alguna
+            //    línea no alcanza, no devuelve boleta y explica el motivo. El navegador no escribe stock.
             clavePago.current = null;
             vaciar();
             navigate(`/despacho/${boleta.id}`);

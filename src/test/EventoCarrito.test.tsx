@@ -72,22 +72,8 @@ test("Prueba 7: agregar al carrito avisa al padre, agrupa el repetido y no super
             });
         }
 
-        // Movimiento de stock: el carrito manda SALIDA con la boleta como referencia.
-        const movimiento = JSON.parse(opciones?.body ?? "{}");
-        return new Response(JSON.stringify({
-            movimiento: {
-                id: 1,
-                productoId: 7,
-                tipo: movimiento.tipo,
-                cantidad: movimiento.cantidad,
-                motivo: movimiento.motivo,
-                referencia: movimiento.referencia,
-                stockResultante: 2,
-                creadoEn: "2026-11-16T10:00:00"
-            },
-            repetido: false
-        }), {
-            status: 201,
+        return new Response(JSON.stringify({ motivo: "No hay nada más que pedir en esta prueba." }), {
+            status: 404,
             headers: { "Content-Type": "application/json" }
         });
     });
@@ -136,15 +122,17 @@ test("Prueba 7: agregar al carrito avisa al padre, agrupa el repetido y no super
     expect(screen.getByText("El carrito está vacío.").textContent).toBe("El carrito está vacío.");
     expect(localStorage.getItem("carrito")).toBeNull();
 
-    // El descuento quedó como SALIDA en el kardex, con la boleta como referencia.
-    const salida = fetchFalso.mock.calls.find(([url, opciones]) =>
-        String(url).includes("/movimientos") && opciones?.method === "POST");
+    // El navegador solo emite la boleta: el descuento de stock lo hace el servicio de boletas,
+    // dentro de la misma operación, para que no dependa de lo que haga la pantalla.
+    const boleta = fetchFalso.mock.calls.find(([url, opciones]) =>
+        String(url).includes("/api/pedidos") && opciones?.method === "POST");
 
-    expect(salida?.[1]?.body).toContain('"tipo":"SALIDA"');
-    expect(salida?.[1]?.body).toContain('"motivo":"VENTA"');
-    expect(salida?.[1]?.body).toContain('"referencia":"PEDIDO-1"');
     // El carrito llegó al máximo del stock: 4 unidades.
-    expect(salida?.[1]?.body).toContain('"cantidad":4');
+    expect(boleta?.[1]?.body).toContain('"cantidad":4');
+    expect(boleta?.[1]?.body).toContain('"productoId":7');
+
+    const movimientos = fetchFalso.mock.calls.filter(([url]) => String(url).includes("/movimientos"));
+    expect(movimientos).toHaveLength(0);
 
     vi.unstubAllGlobals();
     localStorage.clear();
